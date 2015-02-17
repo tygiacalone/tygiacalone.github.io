@@ -169,6 +169,7 @@ a[href^="http"]
 
 a:link {
     text-decoration: none;
+    color: black;
 }
 
 a:visited {
