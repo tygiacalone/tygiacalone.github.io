@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <link type="text/css" rel="stylesheet" href="styles.css"/>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+    
+    brytog = true;
+    invtog = false;
+    indtog = false;
+    
+    
+$(document).ready(function(){
+  $("#brysi").click(function(){
+      if(indtog)
+      {
+         $("#indexer").fadeOut(200);
+          indtog = false;
+      }
+      if(invtog)
+      {
+          $("#space").fadeOut(200);
+          invtog = false;
+      }
+      if(brytog)
+      {
+         $("#description").fadeOut(600);
+          brytog = false;
+      }
+      else
+      {
+         $("#description").delay(400).fadeIn(600);
+         $(this).toggleClass('off');
+          brytog = true;
+      }
+      
+  });
+
+    
+  $("#search").click(function(){
+      if(brytog)
+      {
+         $("#description").fadeOut(200);
+          brytog = false;
+      }
+      if(invtog)
+      {
+          $("#space").fadeOut(200);
+          invtog = false;
+      }
+      if(indtog)
+      {
+         $("#indexer").fadeOut(600);
+          indtog = false;
+      }
+      else
+      {
+         $("#indexer").delay(400).fadeIn(600);
+         $(this).toggleClass('on');
+          indtog = true;
+      }
+  });
+    
+        
+  $("#invaders").click(function(){
+      if(brytog)
+      {
+         $("#description").fadeOut(200);
+          brytog = false;
+      }
+      if(indtog)
+      {
+          $("#indexer").fadeOut(200);
+          indtog = false;
+      }
+      if(invtog)
+      {
+         $("#space").fadeOut(600);
+          invtog = false;
+      }
+      else
+      {
+         $("#space").delay(400).fadeIn(600);
+         $(this).toggleClass('on');
+          invtog = true;
+      }
+  });
+});
+</script>
+        <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
+    
+		<title>Ty Giacalone | Portfolio</title>
+	</head>
+    
+    
+	<body>
+        <container>
+            <wrapper>
+                <header>
+                    <div class="name"><a href="me.html">Ty Giacalone</a></div>
+                    <br>
+                    <nav>
+                        <ul class="directory">
+                            <li><a href="mailto:tgiacalo@ucla.edu" >Contact</a></li>
+                            <li><a href="docs/TyGiacaloneResume.pdf">Resume</a></li>
+                            <li><a href="me.html">Me</a></li>
+                            <li class="current"><a href="index.html">Projects</a></li>
+                        </ul>
+                    </nav>
+                </header>
+                <main>
+                    <sel class="sel" id="listing">
+                        <ul>
+                            <div id="brysi" class="on"><a href="#" onclick="toggle_visibility('description');">
+                            <img class="pictures" src="img/ty_icons_1.png"></a>
+                            <br></div>
+                            <div id="search"><a href="#" onclick="toggle_visibility('indexer');">
+                            <img class="pictures" src="img/ty_icons_22.png"></a>
+                            <br></div>
+                            <div id="invaders"><a href="#" onclick="toggle_visibility('space');">
+                            <img class="pictures" src="img/ty_icons_23.png"></a>
+                            </div>
+                            
+                        </ul>
+                    </sel>
+                        <div id="contents">
+                                            <description id="description" class="first">
+                            <pics>
+                                <img class="examples" src="img/Brysi4.png">
+                            </pics>
+                            <br>
+                            <br>
+                            <br>
+                                An interactive Android soundboard created for professional YouTuber, Bryan Simon of Machinima.com. <br>
+                                <br>
+                                The focus was an elegant design, both in aesthetics and code. The mobile audio app features custom auto-resizing button and background .9 files, play/pause functionality, a splash screen, and proper scaling with all screen sizes and resolutions.<br>
+                                <br>
+                                Code draws from an array of sound and text files, automatically rendering and formatting buttons of the appropriate size based on calculations utilizing system data. This ensures future additions or removals of sound bites to be a trivial process, as all formatting is automated rather than hard coded.<br>
+                                <br>
+                                <a href="https://github.com/tygiacalone/Soundboard" >[github]</a><br>
+                        </description>
+                    
+                    <description id="indexer" class="toggle">
+                                <img class="cmd" src="img/SearchEngine.png">
+                            <br>
+                            <br>
+                            <br>
+            I was tasked with implementing a basic web crawler and search engine in C++.<br>
+            <br>
+            Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.<br>
+            <br>
+            <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
+                        </description>
+                    
+                                            <description id="space" class="toggle">
+                            <pics>
+                                <img class="invaders" src="img/SpaceInflators.png">
+                            </pics>
+                                                <br>
+                                                <br>
+            <b>The aliens are fierce and the torpedoes are scarce.</b><br>
+            <br>
+            Enter Space Inflators. A classic top-down shooter written in C++, inspired by the arcade classic, Space Invaders. Utilizing an existing graphics and sound API, I was tasked with creating my own take on xenocide in two dimensions.<br>
+            <br>
+            Space Inflators features 3 different types of aliens, all with unique AI states and behaviors, damage statistics, hit points, and power up drop rates. <br>
+            <br>
+            Challenges included allocation and de-allocation of memory as to prevent memory leaks, intelligent class structures, utilization of inheritance, and generalization of functions in order to minimize duplicate code.<br>
+            <br>
+            <a href="https://www.mediafire.com/?geri5ff45fuvxj5">[playable demo]</a> (2MB .zip)
+                                                <br>
+                                                <br>
+            <a href="https://github.com/tygiacalone/SpaceInflators" target="_blank">[github]</a>
+                        </description>
+                    </div>
+                    
+                </main>
+            </wrapper>
+        </container>
+        <footer></footer>
+	</body>
+</html>

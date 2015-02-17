@@ -1,0 +1,169 @@
+body {
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+    margin-left: 50px;
+    margin-top: 30px;
+    color: #545b59;
+}
+
+footer {
+    clear: both;
+    height: 50px;
+}
+
+nav {
+    float: right;
+    margin-right: 50px;
+}
+
+nav ul li {
+    font-family: "Source Code Pro", sans-serif;
+    font-weight: 300;
+    text-transform: uppercase;
+    font-size: 24px;
+    display: inline-block;
+    margin-left: 30px;
+}
+
+nav a:hover {
+    color: #57d0b1;
+}
+
+h1 {
+    margin: 0px;
+    padding: 0px;
+    margin-bottom: 10px;
+    font-family: "Roboto", serif;
+    font-weight: 100;
+    font-size: 48px;
+    float: left;
+}
+
+h2 {
+    font-weight: 100;
+    margin: 0px;
+    text-align: left;   
+}
+
+ul {
+    list-style: none;
+    padding: 0px;
+}
+
+a:link, a:visited, a:active {
+    text-decoration: none;
+    color: #545b59;
+}
+
+#current {
+    color: #57d0b1;
+}
+
+#content {
+    clear: both;
+    margin-top: 10px;
+    margin-right: 50px;
+}
+
+#filters ul li {
+    font-family: "Source Code Pro", sans-serif;
+    font-weight: 300;
+    font-size: 24px;
+    display: inline-block;
+    color: #57d0b1;
+}
+
+#filters .hardware {
+    margin-right: 40px; 
+}
+
+#filters .hardware, #filters .software {
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+#filters .hardware:hover, #filters .software:hover {
+    color: #57d0b1;
+}
+
+.clicked {
+    color: #545b59 !important;
+}
+
+.hardware, .software {
+    clear: both;
+    height: 100%;
+}
+
+.hardware img, .software img {
+    margin-left: 2%;
+    float: left;
+    width: 50%;
+    padding-bottom: 15px;
+}
+.hardware p, .software p {
+    padding-bottom: 15px;
+}
+
+.hardware a:hover, .software a:hover {
+    color: #57d0b1;
+    text-decoration: underline;
+}
+
+.info {
+    float: left;
+    width: 48%;
+    text-align: justify;
+}
+
+.info ul {
+    margin-left: 0;
+    padding-left: 1em;
+    text-indent: -1em;
+    padding-bottom: 15px;
+}
+
+.info ul li:before {
+	content: '+';
+    margin-right: 4px;
+    color: #57d0b1;
+}
+
+
+@media (max-width:1000px) {
+    nav {
+        clear: both;
+        float: left;
+        margin: 0%;
+        padding: 0%;
+    }
+    
+    nav ul li {
+        margin-left: 0px;
+        margin-right: 30px;
+    }
+}
+
+@media (max-width: 700px) {
+    body {
+        margin: 6%;
+    }
+    
+    #content {
+        margin-right: 0px;
+    }
+    
+    .hardware img, .software img {
+        max-width: 600px;
+        margin-left: 2%;
+        clear: both;
+        float: left;
+        width: 100%;
+        padding-bottom: 15px;
+    }
+    
+    .info {
+        max-width: 600px;
+        width: 100%;
+    }
+}
