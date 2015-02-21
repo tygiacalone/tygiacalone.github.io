@@ -92,8 +92,11 @@ li
 }
 
 .name a:active {
-    text-decoration: none;
-    border-bottom: 0px;
+    background-color: rgba(41, 173, 228, 0.2);
+    background-color: #d3eef9;
+	transition: background-color .75s;
+	-webkit-transition: background-color 0.75s;
+    text-decoration:none;
 }
 
 header
