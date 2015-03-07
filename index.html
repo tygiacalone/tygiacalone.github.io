@@ -6,87 +6,99 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script>
     
-    brytog = true;
-    invtog = false;
-    indtog = false;
+    brysiOn = true;
+    invaderOn = false;
+    indexerOn = false;
     
     
 $(document).ready(function(){
-  $("#brysi").click(function(){
-      if(indtog)
+
+    $("#brysi").toggleClass('on');
+
+    $("#brysi").click(function(){
+      if(indexerOn)
       {
          $("#indexer").fadeOut(200);
-          indtog = false;
+         $("#search").toggleClass('on');
+          indexerOn = false;
       }
-      if(invtog)
+      if(invaderOn)
       {
           $("#space").fadeOut(200);
-          invtog = false;
+         $("#invaders").toggleClass('on');
+          invaderOn = false;
       }
-      if(brytog)
+      if(brysiOn)
       {
          $("#description").fadeOut(600);
-          brytog = false;
+         $(this).toggleClass('on');
+          brysiOn = false;
       }
-      else
+      else if (!brysiOn)
       {
          $("#description").delay(400).fadeIn(600);
-         $(this).toggleClass('off');
-          brytog = true;
+         $(this).toggleClass('on');
+          brysiOn = true;
       }
-      
-  });
 
-    
-  $("#search").click(function(){
-      if(brytog)
+    });
+
+
+    $("#search").click(function(){
+      if(brysiOn)
       {
          $("#description").fadeOut(200);
-          brytog = false;
+         $("#brysi").toggleClass('on');
+          brysiOn = false;
       }
-      if(invtog)
+      if(invaderOn)
       {
           $("#space").fadeOut(200);
-          invtog = false;
+         $("#invaders").toggleClass('on');
+          invaderOn = false;
       }
-      if(indtog)
+      if(indexerOn)
       {
          $("#indexer").fadeOut(600);
-          indtog = false;
+          indexerOn = false;
+         $(this).toggleClass('on');
       }
       else
       {
          $("#indexer").delay(400).fadeIn(600);
          $(this).toggleClass('on');
-          indtog = true;
+          indexerOn = true;
       }
-  });
-    
-        
-  $("#invaders").click(function(){
-      if(brytog)
+    });
+
+
+    $("#invaders").click(function(){
+      if(brysiOn)
       {
          $("#description").fadeOut(200);
-          brytog = false;
+         $("#brysi").toggleClass('on');
+          brysiOn = false;
       }
-      if(indtog)
+      if(indexerOn)
       {
           $("#indexer").fadeOut(200);
-          indtog = false;
+         $("#search").toggleClass('on');
+          indexerOn = false;
       }
-      if(invtog)
+      if(invaderOn)
       {
          $("#space").fadeOut(600);
-          invtog = false;
+          invaderOn = false;
+         $(this).toggleClass('on');
       }
       else
       {
          $("#space").delay(400).fadeIn(600);
          $(this).toggleClass('on');
-          invtog = true;
+          invaderOn = true;
       }
-  });
-});
+    });
+}); 
 </script>
         <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
@@ -114,7 +126,7 @@ $(document).ready(function(){
                 <main>
                     <sel class="sel" id="listing">
                         <ul>
-                            <div id="brysi" class="on"><a href="#" onclick="toggle_visibility('description');">
+                            <div id="brysi"><a href="#" onclick="toggle_visibility('description');">
                             <img class="pictures" src="img/ty_icons_1.png"></a>
                             <br></div>
                             <div id="search"><a href="#" onclick="toggle_visibility('indexer');">
