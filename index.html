@@ -6,14 +6,14 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 <script>
     
-    brysiOn = true;
-    invaderOn = false;
+    brysiOn = false;
     indexerOn = false;
+    invaderOn = true;
     
     
 $(document).ready(function(){
 
-    $("#brysi").toggleClass('on');
+    $("#invaders").toggleClass('on');
 
     $("#brysi").click(function(){
       if(indexerOn)
@@ -126,20 +126,21 @@ $(document).ready(function(){
                 <main>
                     <sel class="sel" id="listing">
                         <ul>
-                            <div id="brysi"><a href="#" onclick="toggle_visibility('description');">
-                            <img class="pictures" src="img/ty_icons_1.png"></a>
-                            <br></div>
-                            <div id="search"><a href="#" onclick="toggle_visibility('indexer');">
-                            <img class="pictures" src="img/ty_icons_22.png"></a>
-                            <br></div>
+                            <br>
                             <div id="invaders"><a href="#" onclick="toggle_visibility('space');">
                             <img class="pictures" src="img/ty_icons_23.png"></a>
                             </div>
+                            <div id="search"><a href="#" onclick="toggle_visibility('indexer');">
+                            <img class="pictures" src="img/ty_icons_22.png"></a>
+                            </div>
+                            <div id="brysi"><a href="#" onclick="toggle_visibility('description');">
+                            <img class="pictures" src="img/ty_icons_1.png"></a>
+                            <br></div>
                             
                         </ul>
                     </sel>
                         <div id="contents">
-                                            <description id="description" class="first">
+                                            <description id="description" class="toggle">
                             <pics>
                                 <img class="examples" src="img/Brysi4.png">
                             </pics>
@@ -167,7 +168,7 @@ $(document).ready(function(){
             <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
                         </description>
                     
-                                            <description id="space" class="toggle">
+                                            <description id="space" class="first">
                             <pics>
                                 <img class="invaders" src="img/SpaceInflators.png">
                             </pics>
