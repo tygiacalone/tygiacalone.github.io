@@ -24,41 +24,19 @@ $(document).ready(function(){
       invadersOn: '#invaders',
       swipesOn: '#swipes'
     }
-    
-    var buttonList = ['#swipes', '#brysi', '#invaders', '#indexer'];
   
     $("#swipes_logo").toggleClass('on');
-  /*
-  var num;
-  for (num in buttonList) {
-    console.log(buttonList[num]);
-    $(buttonList[num] + '_logo').click(function(){
-      for (var toggle in buttons) {
-        if (buttons[toggle]) {
-
-          $(classLookup[toggle]).fadeOut(200);
-          $(classLookup[toggle] + '_logo').toggleClass('on');
-          buttons[toggle] = false;
-
-          $(buttonList[num] + '_logo').toggleClass('on');
-          $(buttonList[num]).fadeIn(200);
-          buttons = true;
-        }
-      }
-    });
-  }
-  */
 
     $("#brysi_logo").click(function(){
         for (var toggle in buttons) {
           if (buttons[toggle]) {
             
-            $(classLookup[toggle]).fadeOut(200);
+            $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
 
             $('#brysi_logo').toggleClass('on');
-            $('#brysi').fadeIn(200);
+            $('#brysi').fadeIn(0);
             buttons.brysiOn = true;
           }
         }
@@ -68,7 +46,7 @@ $(document).ready(function(){
         for (var toggle in buttons) {
           if (buttons[toggle]) {
             
-            $(classLookup[toggle]).fadeOut(200);
+            $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
 
@@ -83,12 +61,12 @@ $(document).ready(function(){
         for (var toggle in buttons) {
           if (buttons[toggle]) {
             
-            $(classLookup[toggle]).fadeOut(200);
+            $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
 
             $('#invaders_logo').toggleClass('on');
-            $('#invaders').fadeIn(200);
+            $('#invaders').fadeIn(0);
             buttons.invadersOn = true;
           }
         }
@@ -98,12 +76,12 @@ $(document).ready(function(){
         for (var toggle in buttons) {
           if (buttons[toggle]) {
             
-            $(classLookup[toggle]).fadeOut(200);
+            $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
 
             $('#indexer_logo').toggleClass('on');
-            $('#indexer').fadeIn(200);
+            $('#indexer').fadeIn(0);
             buttons.indexerOn = true;
           }
         }
