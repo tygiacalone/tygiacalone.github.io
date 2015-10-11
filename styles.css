@@ -42,6 +42,14 @@ description
 }
 
 
+.swipes
+{
+    display: block;
+    margin: auto;
+    max-width: 35em;
+}
+
+
 .off
 {
     opacity: 1.0 !important;
