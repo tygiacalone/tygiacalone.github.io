@@ -1,36 +1,33 @@
 <!DOCTYPE html>
 <html>
-	<head> 
-        <link type="text/css" rel="stylesheet" href="styles.css"/>
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script>
-    
+<head>
+  <link type="text/css" rel="stylesheet" href="styles.css" />
 
-    
-    
-$(document).ready(function(){
-  
-    var buttons = {
-      brysiOn: false,
-      indexerOn: false,
-      invadersOn: false,
-      swipesOn: true
-    };
-  
-    var classLookup = {
-      brysiOn: '#brysi',
-      indexerOn: '#indexer',
-      invadersOn: '#invaders',
-      swipesOn: '#swipes'
-    }
-  
-    $("#swipes_logo").toggleClass('on');
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function() {
 
-    $("#brysi_logo").click(function(){
+      var buttons = {
+        brysiOn: false,
+        indexerOn: false,
+        invadersOn: false,
+        swipesOn: true
+      };
+
+      var classLookup = {
+        brysiOn: '#brysi',
+        indexerOn: '#indexer',
+        invadersOn: '#invaders',
+        swipesOn: '#swipes'
+      }
+
+      $("#swipes_logo").toggleClass('on');
+
+      $("#brysi_logo").click(function() {
         for (var toggle in buttons) {
           if (buttons[toggle]) {
-            
+
             $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
@@ -40,12 +37,12 @@ $(document).ready(function(){
             buttons.brysiOn = true;
           }
         }
-    });
-  
-    $("#swipes_logo").click(function(){
+      });
+
+      $("#swipes_logo").click(function() {
         for (var toggle in buttons) {
           if (buttons[toggle]) {
-            
+
             $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
@@ -55,12 +52,12 @@ $(document).ready(function(){
             buttons.swipesOn = true;
           }
         }
-    });
-        
-    $("#invaders_logo").click(function(){
+      });
+
+      $("#invaders_logo").click(function() {
         for (var toggle in buttons) {
           if (buttons[toggle]) {
-            
+
             $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
@@ -70,12 +67,12 @@ $(document).ready(function(){
             buttons.invadersOn = true;
           }
         }
-    });
-        
-    $("#indexer_logo").click(function(){
+      });
+
+      $("#indexer_logo").click(function() {
         for (var toggle in buttons) {
           if (buttons[toggle]) {
-            
+
             $(classLookup[toggle]).fadeOut(0);
             $(classLookup[toggle] + '_logo').toggleClass('on');
             buttons[toggle] = false;
@@ -85,142 +82,148 @@ $(document).ready(function(){
             buttons.indexerOn = true;
           }
         }
+      });
     });
-}); 
-</script>
-        <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400' rel='stylesheet' type='text/css'>
-        <link href='http://fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
-    
-		<title>Ty Giacalone | Portfolio</title>
-	</head>
-    
-    
-	<body>
-        <container>
-            <wrapper>
-                <header>
-                    <div class="name"><a href="me.html">Ty Giacalone</a></div>
-                    <br>
-                    <nav>
-                        <ul class="directory">
-                            <li><a href="mailto:tgiacalo@ucla.edu" >Contact</a></li>
-                            <li><a href="https://github.com/tygiacalone">GitHub</a></li>
-                            <li><a href="docs/TyGiacaloneResume.pdf">Resume</a></li>
-                            <li><a href="me.html">Me</a></li>
-                            <li class="current"><a href="index.html">Projects</a></li>
-                        </ul>
-                    </nav>
-                </header>
-                <main>
-                    <sel class="sel" id="listing">
-                        <ul>
-                            <br>
-                            <div id="swipes_logo"><a href="#">
-                            <img class="pictures" src="img/ty_icons_swipes.png"></a>
-                            </div>
-                          
-                            <div id="brysi_logo"><a href="#">
-                            <img class="pictures" src="img/ty_icons_1.png"></a>
-                            <br></div>
-                          
-                            <div id="invaders_logo"><a href="#">
-                            <img class="pictures" src="img/ty_icons_23.png"></a>
-                            </div>
-                          
-                            <div id="indexer_logo"><a href="#">
-                            <img class="pictures" src="img/ty_icons_22.png"></a>
-                            </div>
-                            
-                        </ul>
-                    </sel>
-                        <div id="contents">
-                          <description id="brysi" class="toggle">
-                              <pics>
-                                  <img class="examples" src="img/Brysi4.png">
-                              </pics>
-                              <br>
-                              <br>
-                              <br>
-                                  An interactive Android soundboard created for professional YouTuber, Bryan Simon of Machinima.com. <br>
-                                  <br>
-                                  The focus was an elegant design, both in aesthetics and code. The mobile audio app features custom auto-resizing button and background .9 files, play/pause functionality, a splash screen, and proper scaling with all screen sizes and resolutions.<br>
-                                  <br>
-                                  Code draws from an array of sound and text files, automatically rendering and formatting buttons of the appropriate size based on calculations utilizing system data. This ensures future additions or removals of sound bites to be a trivial process, as all formatting is automated rather than hard coded.<br>
-                                  <br>
-                                  <a href="https://github.com/tygiacalone/Soundboard" >[github]</a><br>
-                          </description>
-                    
-                          <description id="indexer" class="toggle">
-                                <img class="cmd" src="img/SearchEngine.png">
-                            <br>
-                            <br>
-                            <br>
-            A basic web crawler and search engine written in C++.<br>
+  </script>
+  <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400' rel='stylesheet' type='text/css'>
+  <link href='http://fonts.googleapis.com/css?family=Roboto:100,300' rel='stylesheet' type='text/css'>
+
+  <title>Ty Giacalone | Portfolio</title>
+</head>
+
+
+<body>
+  <container>
+    <wrapper>
+      <header>
+        <div class="name"><a href="me.html">Ty Giacalone</a></div>
+        <br>
+        <nav>
+          <ul class="directory">
+            <li><a href="mailto:tgiacalo@ucla.edu">Contact</a></li>
+            <li><a href="https://github.com/tygiacalone">GitHub</a></li>
+            <li><a href="docs/TyGiacaloneResume.pdf">Resume</a></li>
+            <li><a href="me.html">Me</a></li>
+            <li class="current"><a href="index.html">Projects</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main>
+        <sel class="sel" id="listing">
+          <ul>
             <br>
-            Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.<br>
+            <div id="swipes_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_swipes.png"></a>
+            </div>
+
+            <div id="brysi_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_1.png"></a>
+              <br>
+            </div>
+
+            <div id="invaders_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_23.png"></a>
+            </div>
+
+            <div id="indexer_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_22.png"></a>
+            </div>
+
+          </ul>
+        </sel>
+        <div id="contents">
+          <description id="brysi" class="toggle">
+            <pics>
+              <img class="examples" src="img/Brysi4.png">
+            </pics>
+            <br>
+            <br>
+            <br> An interactive Android soundboard created for professional YouTuber, Bryan Simon of Machinima.com.
+            <br>
+            <br> The focus was an elegant design, both in aesthetics and code. The mobile audio app features custom auto-resizing button and background .9 files, play/pause functionality, a splash screen, and proper scaling with all screen sizes and resolutions.
+            <br>
+            <br> Code draws from an array of sound and text files, automatically rendering and formatting buttons of the appropriate size based on calculations utilizing system data. This ensures future additions or removals of sound bites to be a trivial process, as all formatting is automated rather than hard coded.
+            <br>
+            <br>
+            <a href="https://github.com/tygiacalone/Soundboard">[github]</a>
+            <br>
+          </description>
+
+          <description id="indexer" class="toggle">
+            <img class="cmd" src="img/SearchEngine.png">
+            <br>
+            <br>
+            <br> A basic web crawler and search engine written in C++.
+            <br>
+            <br> Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.
+            <br>
             <br>
             <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
-                        </description>
-                    
-                        <description id="invaders" class="toggle">
-                            <pics>
-                                <img class="invaders" src="img/SpaceInflators.png">
-                            </pics>
-                                                <br>
-                                                <br>
-            <b>The aliens are fierce and the torpedoes are scarce.</b><br>
+          </description>
+
+          <description id="invaders" class="toggle">
+            <pics>
+              <img class="invaders" src="img/SpaceInflators.png">
+            </pics>
             <br>
-            Enter Space Inflators. A classic top-down shooter written in C++, inspired by the arcade classic, Space Invaders. Utilizing an existing graphics and sound API, I created my own take on xenocide in two dimensions.<br>
             <br>
-            Space Inflators features 3 different types of aliens, all with unique AI states and behaviors, damage statistics, hit points, and power up drop rates. <br>
+            <b>The aliens are fierce and the torpedoes are scarce.</b>
+            <br>
+            <br> Enter Space Inflators. A classic top-down shooter written in C++, inspired by the arcade classic, Space Invaders. Utilizing an existing graphics and sound API, I created my own take on xenocide in two dimensions.
+            <br>
+            <br> Space Inflators features 3 different types of aliens, all with unique AI states and behaviors, damage statistics, hit points, and power up drop rates.
+            <br>
             <br>
             <a href="https://www.mediafire.com/?geri5ff45fuvxj5">[playable demo]</a> (2MB .zip)
-                                                <br>
-                                                <br>
+            <br>
+            <br>
             <a href="https://github.com/tygiacalone/SpaceInflators" target="_blank">[github]</a>
-                        </description>
-                          
-                        <description id="swipes" class="first">
-                            <pics>
-                                <img class="examples" src="img/swipes_logo.png">
-                            </pics>
-                                                <br>
-                                                <br>
-            <b>Swipes for Advice</b><br>
-            <br>
-            Tinder for networking. As underclassmen we're always wasting extra dining hall swipes and need valuable mentorship and career advice, and our older upperclassmen friends miss UCLA's wonderful buffet style dining.
+          </description>
+
+          <description id="swipes" class="first">
+            <pics>
+              <img class="examples" src="img/swipes_logo.png">
+            </pics>
             <br>
             <br>
-            With Swipes for Advice, it's a win-win! 
-            <br>              
+            <b>Swipes for Advice</b>
             <br>
-            Browse, match, and chat with local profiles showing credentials pulled from LinkedIn. If you two hit it off, take an upperclassmen out for a meal and receive mentorship over lunch!<br>
+            <br> Tinder for networking. As underclassmen we're always wasting extra dining hall swipes and need valuable mentorship and career advice, and our older upperclassmen friends miss UCLA's wonderful buffet style dining.
             <br>
-                                                <br>
+            <br> With Swipes for Advice, it's a win-win!
+            <br>
+            <br> Browse, match, and chat with local profiles showing credentials pulled from LinkedIn. If you two hit it off, take an upperclassmen out for a meal and receive mentorship over lunch!
+            <br>
+            <br>
+            <br>
             <a href="https://github.com/tygiacalone/FoodForThought" target="_blank">[github]</a>
-                                                <br>
-                                                <br>
+            <br>
+            <br>
             <a href="docs/SwipesForAdvice.pptx" target="_blank">[ppt presentation]</a>
-                                                <br>
-                                                <br>
-            Additional Screenshots:
-                          <br>
-                            <pics>
-                                <img class="examples" src="img/swipes_match.png">
-                                <br>
-                                <img class="examples" src="img/swipes_caroline.png">
-                                <br>
-                                <img class="examples" src="img/swipes_friends.png">
-                                <br>
-                                <img class="examples" src="img/swipes_chat.png">
-                                <br>
-                            </pics>
-                        </description>
-                    </div>
-                    
-                </main>
-            </wrapper>
-        </container>
-        <footer></footer>
-	</body>
+            <br>
+            <br> Additional Screenshots:
+            <br>
+            <pics>
+              <img class="examples" src="img/swipes_match.png">
+              <br>
+              <img class="examples" src="img/swipes_caroline.png">
+              <br>
+              <img class="examples" src="img/swipes_friends.png">
+              <br>
+              <img class="examples" src="img/swipes_chat.png">
+              <br>
+            </pics>
+          </description>
+        </div>
+
+      </main>
+    </wrapper>
+  </container>
+  <footer></footer>
+</body>
+
 </html>
