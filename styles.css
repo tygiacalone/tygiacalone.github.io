@@ -287,11 +287,11 @@ a
 }
 a:hover
 {
-x
+    background-color: rgba(41, 173, 228, 0.2);
+    background-color: #d3eef9;
 	transition: background-color .75s;
 	-webkit-transition: background-color 0.75s;
     text-decoration:none;
-    
 }
 
 a:visited, a:active, a:link
