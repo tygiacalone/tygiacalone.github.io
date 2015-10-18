@@ -19,6 +19,13 @@ description
     padding-right: 5%;
 }
 
+iframe
+{
+  margin-right: auto;
+  margin-left: auto;
+  display: block;
+}
+
 .examples
 {
     display: block;

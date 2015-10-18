@@ -9,6 +9,7 @@
     $(document).ready(function() {
 
       var buttons = {
+        snowmenOn: false,
         brysiOn: false,
         indexerOn: false,
         invadersOn: false,
@@ -19,7 +20,8 @@
         brysiOn: '#brysi',
         indexerOn: '#indexer',
         invadersOn: '#invaders',
-        swipesOn: '#swipes'
+        swipesOn: '#swipes',
+        snowmenOn: '#snowmen'
       }
 
       $("#swipes_logo").toggleClass('on');
@@ -64,6 +66,21 @@
 
             $('#invaders_logo').toggleClass('on');
             $('#invaders').fadeIn(0);
+            buttons.invadersOn = true;
+          }
+        }
+      });
+      
+      $("#snowmen_logo").click(function() {
+        for (var toggle in buttons) {
+          if (buttons[toggle]) {
+
+            $(classLookup[toggle]).fadeOut(0);
+            $(classLookup[toggle] + '_logo').toggleClass('on');
+            buttons[toggle] = false;
+
+            $('#snowmen_logo').toggleClass('on');
+            $('#snowmen').fadeIn(0);
             buttons.invadersOn = true;
           }
         }
@@ -123,6 +140,11 @@
               <br>
             </div>
 
+            <div id="snowmen_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_23.png"></a>
+            </div
+              
             <div id="invaders_logo">
               <a href="#">
                 <img class="pictures" src="img/ty_icons_23.png"></a>
@@ -136,6 +158,7 @@
           </ul>
         </sel>
         <div id="contents">
+
           <description id="brysi" class="toggle">
             <pics>
               <img class="examples" src="img/Brysi4.png">
@@ -151,37 +174,6 @@
             <br>
             <a href="https://github.com/tygiacalone/Soundboard">[github]</a>
             <br>
-          </description>
-
-          <description id="indexer" class="toggle">
-            <img class="cmd" src="img/SearchEngine.png">
-            <br>
-            <br>
-            <br> A basic web crawler and search engine written in C++.
-            <br>
-            <br> Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.
-            <br>
-            <br>
-            <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
-          </description>
-
-          <description id="invaders" class="toggle">
-            <pics>
-              <img class="invaders" src="img/SpaceInflators.png">
-            </pics>
-            <br>
-            <br>
-            <b>The aliens are fierce and the torpedoes are scarce.</b>
-            <br>
-            <br> Enter Space Inflators. A classic top-down shooter written in C++, inspired by the arcade classic, Space Invaders. Utilizing an existing graphics and sound API, I created my own take on xenocide in two dimensions.
-            <br>
-            <br> Space Inflators features 3 different types of aliens, all with unique AI states and behaviors, damage statistics, hit points, and power up drop rates.
-            <br>
-            <br>
-            <a href="https://www.mediafire.com/?geri5ff45fuvxj5">[playable demo]</a> (2MB .zip)
-            <br>
-            <br>
-            <a href="https://github.com/tygiacalone/SpaceInflators" target="_blank">[github]</a>
           </description>
 
           <description id="swipes" class="first">
@@ -218,6 +210,57 @@
               <br>
             </pics>
           </description>
+
+          <description id="indexer" class="toggle">
+            <img class="examples" src="img/SearchEngine.png">
+            <br>
+            <br>
+            <br> A basic web crawler and search engine written in C++.
+            <br>
+            <br> Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.
+            <br>
+            <br>
+            <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
+          </description>
+          
+          <description id="snowmen" class="toggle">
+            <pics>
+              <iframe style="border: 1px solid black;" width="400" height="400" src="https://www.youtube.com/embed/ooPaUXGAEG0?theme=light&modestbranding=1&autohide=1&showinfo=0&controls=0&rel=0&vq=hd1080" frameborder="0" allowfullscreen></iframe>
+            </pics>
+            <br>
+            <br>
+            <b>It's a Wonderful Day</b>
+            <br>
+            <br> Sometimes we just need a little peace and quiet.
+            <br>
+            <br> It's a Wonderful Day is an animation created with openGL. 
+            <br>
+            <br>
+            It placed top 3 for best animation project in UCLA's Computer Graphics class of Spring 2014.
+            <br>
+            <br>
+            <a href="https://www.youtube.com/watch?v=ooPaUXGAEG0" target="_blank">[youtube]</a>
+          </description>
+
+          <description id="invaders" class="toggle">
+            <pics>
+              <img class="invaders" src="img/SpaceInflators.png">
+            </pics>
+            <br>
+            <br>
+            <b>The aliens are fierce and the torpedoes are scarce.</b>
+            <br>
+            <br> Enter Space Inflators. A classic top-down shooter written in C++, inspired by the arcade classic, Space Invaders. Utilizing an existing graphics and sound API, I created my own take on xenocide in two dimensions.
+            <br>
+            <br> Space Inflators features 3 different types of aliens, all with unique AI states and behaviors, damage statistics, hit points, and power up drop rates.
+            <br>
+            <br>
+            <a href="https://www.mediafire.com/?geri5ff45fuvxj5">[playable demo]</a> (2MB .zip)
+            <br>
+            <br>
+            <a href="https://github.com/tygiacalone/SpaceInflators" target="_blank">[github]</a>
+          </description>
+
         </div>
 
       </main>
