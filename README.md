@@ -1,3 +1,3 @@
 # tygiacalone.github.io
-# giacalone.me
+# tygiacalone.com
 Personal website and portfolio.
