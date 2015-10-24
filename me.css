@@ -9,6 +9,10 @@ body
     display: block;
 }
 
+#contents {
+  background-color: rgba(255,255,255, 0.8);
+}
+
 description
 {
     max-width: 40%;
@@ -17,7 +21,8 @@ description
     position: relative;
     float: right;
     padding-left: 4%;
-    padding-right: 4%;    
+    padding-right: 4%;  
+    background-color: inherit;
 }
 
 text
