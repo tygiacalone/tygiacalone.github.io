@@ -6,100 +6,78 @@
 
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   <script>
-    $(document).ready(function() {
 
-      var buttons = {
-        snowmenOn: false,
-        brysiOn: false,
-        indexerOn: false,
-        invadersOn: false,
-        swipesOn: true
-      };
-
-      var classLookup = {
-        brysiOn: '#brysi',
-        indexerOn: '#indexer',
-        invadersOn: '#invaders',
-        swipesOn: '#swipes',
-        snowmenOn: '#snowmen'
-      }
-
-      $("#swipes_logo").toggleClass('on');
-
-      $("#brysi_logo").click(function() {
-        for (var toggle in buttons) {
-          if (buttons[toggle]) {
-
-            $(classLookup[toggle]).fadeOut(0);
-            $(classLookup[toggle] + '_logo').toggleClass('on');
-            buttons[toggle] = false;
-
-            $('#brysi_logo').toggleClass('on');
-            $('#brysi').fadeIn(0);
-            buttons.brysiOn = true;
+      var ViewController = {
+        projects: {
+          mint: {
+            id: '#mint',
+            button: '#mint_logo',
+            isOn: true,
+          },
+          swipes: {
+            id: '#swipes',
+            button: '#swipes_logo',
+            isOn: false,
+          },
+          brysi: {
+            id: '#brysi',
+            button: '#brysi_logo',
+            isOn: false,
+          },
+          indexer: {
+            id: '#indexer',
+            button: '#indexer_logo',
+            isOn: false,
+          },
+          invaders: {
+            id: '#invaders',
+            button: '#invaders_logo',
+            isOn: false,
+          },
+          snowmen: {
+            id: '#snowmen',
+            button: '#snowmen_logo',
+            isOn: false,
           }
-        }
-      });
-
-      $("#swipes_logo").click(function() {
-        for (var toggle in buttons) {
-          if (buttons[toggle]) {
-
-            $(classLookup[toggle]).fadeOut(0);
-            $(classLookup[toggle] + '_logo').toggleClass('on');
-            buttons[toggle] = false;
-
-            $('#swipes_logo').toggleClass('on');
-            $('#swipes').fadeIn(0);
-            buttons.swipesOn = true;
+      },
+        
+      init: function () {
+          for (var k in this.projects) {
+            var projectId = this.projects[k].id;
+            var projectButton = this.projects[k].button;
+            
+            $(projectButton).click(function (ev) {
+              var button = ev.currentTarget.id;
+              var idName = button.split('_')[0];
+              for (var key in this.projects) {
+                this.projects[key].isOn = false;
+              }
+              
+              this.projects[idName].isOn = true;
+              this.updateView();
+            }.bind(this));
           }
-        }
-      });
-
-      $("#invaders_logo").click(function() {
-        for (var toggle in buttons) {
-          if (buttons[toggle]) {
-
-            $(classLookup[toggle]).fadeOut(0);
-            $(classLookup[toggle] + '_logo').toggleClass('on');
-            buttons[toggle] = false;
-
-            $('#invaders_logo').toggleClass('on');
-            $('#invaders').fadeIn(0);
-            buttons.invadersOn = true;
-          }
-        }
-      });
+          this.updateView();
+      },
       
-      $("#snowmen_logo").click(function() {
-        for (var toggle in buttons) {
-          if (buttons[toggle]) {
-
-            $(classLookup[toggle]).fadeOut(0);
-            $(classLookup[toggle] + '_logo').toggleClass('on');
-            buttons[toggle] = false;
-
-            $('#snowmen_logo').toggleClass('on');
-            $('#snowmen').fadeIn(0);
-            buttons.snowmenOn = true;
+      updateView: function () {
+          for (var k in this.projects) {
+            var isOn = this.projects[k].isOn;
+            var projectId = this.projects[k].id;
+            var projectButton = this.projects[k].button;
+            if (!isOn) {
+                $(projectId).fadeOut(0);
+                $(projectButton).removeClass('on');
+            } else {
+                $(projectId).fadeIn(0);
+                $(projectButton).addClass('on'); 
+            }
           }
-        }
-      });
+      },  
+    };
 
-      $("#indexer_logo").click(function() {
-        for (var toggle in buttons) {
-          if (buttons[toggle]) {
-
-            $(classLookup[toggle]).fadeOut(0);
-            $(classLookup[toggle] + '_logo').toggleClass('on');
-            buttons[toggle] = false;
-
-            $('#indexer_logo').toggleClass('on');
-            $('#indexer').fadeIn(0);
-            buttons.indexerOn = true;
-          }
-        }
-      });
+    $(document).ready(function() {
+      ViewController.init();
     });
   </script>
   <link href='http://fonts.googleapis.com/css?family=Lato:100,300,400' rel='stylesheet' type='text/css'>
@@ -120,7 +98,6 @@
             <li><a href="mailto:tgiacalo@ucla.edu">Contact</a></li>
             <li><a href="http://github.com/tygiacalone">GitHub</a></li>
             <li><a name="X-Frame-Options" value="SAMEORIGIN" href="docs/TyGiacaloneResume.pdf">Resume</a></li>
-            <li><a href="me.html">Me</a></li>
             <li class="current"><a href="index.html">Projects</a></li>
           </ul>
         </nav>
@@ -129,6 +106,12 @@
         <sel class="sel" id="listing">
           <ul>
             <br>
+            
+            <div id="mint_logo">
+              <a href="#">
+                <img class="pictures" src="img/ty_icons_22.png"></a>
+            </div>
+            
             <div id="swipes_logo">
               <a href="#">
                 <img class="pictures" src="img/ty_icons_swipes.png"></a>
@@ -148,11 +131,6 @@
             <div id="invaders_logo">
               <a href="#">
                 <img class="pictures" style="height:400px; width 400px;" src="img/ty_icons_23.png"></a>
-            </div>
-
-            <div id="indexer_logo">
-              <a href="#">
-                <img class="pictures" src="img/ty_icons_22.png"></a>
             </div>
 
           </ul>
@@ -211,16 +189,16 @@
             </pics>
           </description>
 
-          <description id="indexer" class="toggle">
-            <img style="display: block; margin: auto; width: 30em;" src="img/SearchEngine.png">
+          <description id="mint" class="toggle">
+            <img style="display: block; margin: auto; max-width: 60em; min-width: 30em;" src="img/mint.png">
             <br>
             <br>
-            <br> A basic web crawler and search engine written in C++.
+            <br> Visualize and explore tweets with D3.js & Ruby on Rails
             <br>
-            <br> Utilizing the Microsoft Windows Internet API (wininet), I designed a program which indexes websites by parsing its plain-text and creating a searchable word map. Users can then search indexed webpages via keywords/phrases and receive match statistics.
+            <br> Zoom, pan, search, and visualize the latest Twitter trends. View automatically "reclustering" groups of 500,000+ tweets based on most popular hashtag, most active user, and most popular twitter client. As users zoom in and out, clusters of tweets automatically resize to become more or less granular.
             <br>
             <br>
-            <a href="https://github.com/tygiacalone/SearchEngine">[github]</a>
+            <a href="https://github.com/scalableinternetservicesarchive/mint">[github]</a>
           </description>
           
           <description id="snowmen" class="toggle">
