@@ -4,14 +4,11 @@ import { isMobile } from 'react-device-detect';
 import { usePlayerControlsContext } from '../contexts/PlayerControlsContext';
 
 const Controls = () => {
-  const moveJoystickRef = useRef(null);
-  const moveJoystickInstanceRef = useRef(null);
-  const lookJoystickRef = useRef(null);
-  const lookJoystickInstanceRef = useRef(null);
-  const [movementValues, setMovementValues] = useState({
-    forward: 0,
-    right: 0,
-  });
+  const joystickContainerRef = useRef(null);
+  const joystickInstanceRef = useRef(null);
+  const lookAreaRef = useRef(null);
+  const [lastTouchPosition, setLastTouchPosition] = useState({ x: 0, y: 0 });
+  const [lookActive, setLookActive] = useState(false);
 
   const {
     moveForward,
@@ -21,158 +18,140 @@ const Controls = () => {
     updateCameraRotation,
   } = usePlayerControlsContext();
 
-  // Initialize joysticks for mobile devices
+  // Handle joystick for movement controls
   useEffect(() => {
-    if (!isMobile) return;
+    if (
+      isMobile &&
+      joystickContainerRef.current &&
+      !joystickInstanceRef.current
+    ) {
+      console.log('Creating mobile joystick');
 
-    if (moveJoystickRef.current && !moveJoystickInstanceRef.current) {
-      // Movement joystick (left side)
-      moveJoystickInstanceRef.current = nipplejs.create({
-        zone: moveJoystickRef.current,
-        mode: 'semi', // Fixed position with defined zone
-        position: { left: '25%', bottom: '25%' },
-        color: 'rgba(255, 255, 255, 0.8)',
-        size: 120,
-        fadeTime: 100,
-        restOpacity: 0.4,
-        restJoystick: true,
-        lockX: false,
-        lockY: false,
-        dynamicPage: true,
+      // Create joystick for mobile controls
+      joystickInstanceRef.current = nipplejs.create({
+        zone: joystickContainerRef.current,
+        mode: 'static',
+        position: { left: '50%', top: '50%' },
+        color: 'white',
+        size: 100,
+        fadeTime: 100, // Smooth fade on release
+        restOpacity: 0.5, // Slightly visible when not active
       });
 
-      // Handle movement joystick with analog control
-      moveJoystickInstanceRef.current.on('move', (evt, data) => {
-        const forward = Math.cos(data.angle.radian) * Math.min(data.force, 1);
-        const right = Math.sin(data.angle.radian) * Math.min(data.force, 1);
+      // Handle joystick events
+      joystickInstanceRef.current.on('move', (evt, data) => {
+        const angle = data.angle.radian;
+        const force = Math.min(data.force, 1);
 
-        // Store normalized vectors for movement
-        setMovementValues({ forward, right });
-
-        // Apply movement based on joystick direction and force
-        if (forward > 0.1) moveForward(forward);
-        else if (forward < -0.1) moveBackward(Math.abs(forward));
-        else {
-          moveForward(0);
-          moveBackward(0);
-        }
-
-        if (right > 0.1) moveRight(right);
-        else if (right < -0.1) moveLeft(Math.abs(right));
-        else {
-          moveRight(0);
-          moveLeft(0);
-        }
-      });
-
-      moveJoystickInstanceRef.current.on('end', () => {
-        // Reset movement when joystick is released
-        setMovementValues({ forward: 0, right: 0 });
+        // Reset all movement
         moveForward(0);
         moveBackward(0);
         moveLeft(0);
         moveRight(0);
-      });
-    }
 
-    if (lookJoystickRef.current && !lookJoystickInstanceRef.current) {
-      // Camera/look joystick (right side)
-      lookJoystickInstanceRef.current = nipplejs.create({
-        zone: lookJoystickRef.current,
-        mode: 'semi', // Fixed position with defined zone
-        position: { right: '25%', bottom: '25%' },
-        color: 'rgba(200, 200, 255, 0.8)',
-        size: 120,
-        fadeTime: 100,
-        restOpacity: 0.4,
-        restJoystick: true,
-        lockX: false,
-        lockY: false,
-        dynamicPage: true,
+        // Apply movement based on joystick direction
+        if (angle >= Math.PI * 0.75 && angle < Math.PI * 1.25) {
+          // Left
+          moveLeft(force);
+        } else if (angle >= Math.PI * 1.25 && angle < Math.PI * 1.75) {
+          // Down
+          moveBackward(force);
+        } else if (angle >= Math.PI * 1.75 || angle < Math.PI * 0.25) {
+          // Right
+          moveRight(force);
+        } else if (angle >= Math.PI * 0.25 && angle < Math.PI * 0.75) {
+          // Up
+          moveForward(force);
+        }
       });
 
-      // Handle camera rotation with analog control
-      lookJoystickInstanceRef.current.on('move', (evt, data) => {
-        // Calculate rotation based on joystick position and force
-        const deltaX =
-          Math.sin(data.angle.radian) * Math.min(data.force * 0.05, 0.05);
-        const deltaY =
-          -Math.cos(data.angle.radian) * Math.min(data.force * 0.03, 0.03);
+      joystickInstanceRef.current.on('end', () => {
+        // Smoothly stop all movement when joystick is released
+        moveForward(0);
+        moveBackward(0);
+        moveLeft(0);
+        moveRight(0);
 
-        // Update camera rotation
-        updateCameraRotation(deltaX, deltaY);
+        console.log('Joystick released, stopping movement');
       });
     }
 
     return () => {
-      // Clean up joystick instances
-      if (moveJoystickInstanceRef.current) {
-        moveJoystickInstanceRef.current.destroy();
-        moveJoystickInstanceRef.current = null;
-      }
-
-      if (lookJoystickInstanceRef.current) {
-        lookJoystickInstanceRef.current.destroy();
-        lookJoystickInstanceRef.current = null;
+      if (joystickInstanceRef.current) {
+        joystickInstanceRef.current.destroy();
+        joystickInstanceRef.current = null;
       }
     };
-  }, [
-    isMobile,
-    moveForward,
-    moveBackward,
-    moveLeft,
-    moveRight,
-    updateCameraRotation,
-  ]);
+  }, [isMobile, moveForward, moveBackward, moveLeft, moveRight]);
+
+  // Handle mobile look controls
+  const handleTouchStart = (event) => {
+    if (!isMobile) return;
+
+    const touch = event.touches[0];
+    setLastTouchPosition({
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+    setLookActive(true);
+
+    // Prevent default to avoid scrolling
+    event.preventDefault();
+  };
+
+  const handleTouchMove = (event) => {
+    if (!isMobile || !lookActive) return;
+
+    const touch = event.touches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+
+    // Calculate movement delta
+    const deltaX = (currentX - lastTouchPosition.x) * 0.005; // Adjust sensitivity
+    const deltaY = (currentY - lastTouchPosition.y) * 0.005;
+
+    // Update camera rotation through context
+    updateCameraRotation(-deltaX, -deltaY);
+
+    // Update last position
+    setLastTouchPosition({
+      x: currentX,
+      y: currentY,
+    });
+
+    // Prevent default to avoid scrolling
+    event.preventDefault();
+  };
+
+  const handleTouchEnd = () => {
+    setLookActive(false);
+  };
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 pointer-events-none z-50">
-        {/* Movement joystick container */}
+      <div className="absolute bottom-4 left-4 z-50">
+        {/* View control area */}
         <div
-          ref={moveJoystickRef}
-          className="absolute left-0 bottom-0 w-1/2 h-1/2 z-50"
-          style={{
-            pointerEvents: 'auto',
-            touchAction: 'none',
-          }}
-        >
-          {/* Visual indicator for joystick base */}
-          <div className="absolute left-[25%] bottom-[25%] w-32 h-32 rounded-full bg-black bg-opacity-20 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-white opacity-50"></div>
-          </div>
-        </div>
+          ref={lookAreaRef}
+          className="absolute top-0 left-0 w-full z-50"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+        />
 
-        {/* Look/camera joystick container */}
+        {/* Joystick container */}
         <div
-          ref={lookJoystickRef}
-          className="absolute right-0 bottom-0 w-1/2 h-1/2 z-50"
-          style={{
-            pointerEvents: 'auto',
-            touchAction: 'none',
-          }}
-        >
-          {/* Visual indicator for joystick base */}
-          <div className="absolute right-[25%] bottom-[25%] w-32 h-32 rounded-full bg-black bg-opacity-20 transform translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-white opacity-50"></div>
-          </div>
-        </div>
+          ref={joystickContainerRef}
+          className="absolute bottom-28 left-4 w-32 h-32 rounded-full bg-white bg-opacity-20 z-50"
+          style={{}}
+        />
 
         {/* Mobile controls info */}
-        <div className="absolute bottom-4 left-4 p-3 bg-white bg-opacity-80 rounded-lg shadow-lg z-20 pointer-events-auto">
-          <h3 className="text-md font-semibold mb-1 text-center">
-            Mobile Controls
-          </h3>
-          <div className="flex justify-between gap-4 text-xs text-center">
-            <div>
-              <div className="mb-1">Left Joystick</div>
-              <div>Movement</div>
-            </div>
-            <div>
-              <div className="mb-1">Right Joystick</div>
-              <div>Look/Camera</div>
-            </div>
-          </div>
+        <div className="p-3 bg-white bg-opacity-80 rounded-lg shadow-lg z-20 pointer-events-auto">
+          <p>Drag joystick to move</p>
+          <p>Drag anywhere to look around</p>
+          <p>Tap for flashlight (F)</p>
         </div>
       </div>
     );
