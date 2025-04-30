@@ -69,6 +69,11 @@ export const PlayerControlsProvider = ({ children }) => {
     }
   };
 
+  // Function to toggle run state for mobile controls
+  const toggleRun = (isRunning) => {
+    setMovement((m) => ({ ...m, run: isRunning }));
+  };
+
   // Handle keyboard controls
   React.useEffect(() => {
     const handleKeyDown = (e) => {
@@ -175,6 +180,7 @@ export const PlayerControlsProvider = ({ children }) => {
     cameraRotation: cameraRotation.current,
     cameraChanged,
     updateCameraRotation,
+    toggleRun,
   };
 
   return (

@@ -7,14 +7,15 @@ const Controls = () => {
   const [lastTouchPosition, setLastTouchPosition] = useState({ x: 0, y: 0 });
   const [lookActive, setLookActive] = useState(false);
 
-  const { moveForward, updateCameraRotation } = usePlayerControlsContext();
+  const { moveForward, updateCameraRotation, toggleRun } =
+    usePlayerControlsContext();
 
   // Handle mobile look controls
   const handleTouchStart = (event) => {
     if (!isMobile) return;
 
     // Check if touch is on walk button area and ignore if it is
-    if (isWalkButtonTouch(event)) return;
+    if (isWalkButtonTouch(event) || isRunButtonTouch(event)) return;
 
     console.log('Look touch start detected');
     const touch = event.touches[0];
@@ -73,6 +74,19 @@ const Controls = () => {
     moveForward(0);
   };
 
+  // Handle run button press/release
+  const handleRunButtonPress = () => {
+    console.log('Run button pressed');
+    moveForward(1);
+    toggleRun(true);
+  };
+
+  const handleRunButtonRelease = () => {
+    console.log('Run button released');
+    moveForward(0);
+    toggleRun(false);
+  };
+
   // Helper function to determine if a touch is on the walk button
   const isWalkButtonTouch = (event) => {
     const walkButtonElement = document.getElementById('walk-button');
@@ -89,8 +103,30 @@ const Controls = () => {
     );
   };
 
+  // Helper function to determine if a touch is on the run button
+  const isRunButtonTouch = (event) => {
+    const runButtonElement = document.getElementById('run-button');
+    if (!runButtonElement) return false;
+
+    const touch = event.touches[0];
+    const buttonRect = runButtonElement.getBoundingClientRect();
+
+    return (
+      touch.clientX >= buttonRect.left &&
+      touch.clientX <= buttonRect.right &&
+      touch.clientY >= buttonRect.top &&
+      touch.clientY <= buttonRect.bottom
+    );
+  };
+
   // Prevent propagation of touch events from walk button to the look area
   const handleWalkButtonTouch = (event) => {
+    // Stop propagation to prevent the look area from handling this touch
+    event.stopPropagation();
+  };
+
+  // Prevent propagation of touch events from run button to the look area
+  const handleRunButtonTouch = (event) => {
     // Stop propagation to prevent the look area from handling this touch
     event.stopPropagation();
   };
@@ -109,6 +145,26 @@ const Controls = () => {
         />
 
         <div className="absolute bottom-4 left-4 z-50">
+          {/* Run button - smaller and above walk button */}
+          <div
+            id="run-button"
+            className="absolute bottom-56 left-6 w-20 h-20 rounded-full bg-yellow-400 bg-opacity-50 flex items-center justify-center z-50 active:bg-opacity-70 select-none"
+            onTouchStart={(e) => {
+              handleRunButtonTouch(e);
+              handleRunButtonPress();
+            }}
+            onTouchEnd={(e) => {
+              handleRunButtonTouch(e);
+              handleRunButtonRelease();
+            }}
+            onTouchCancel={(e) => {
+              handleRunButtonTouch(e);
+              handleRunButtonRelease();
+            }}
+          >
+            <span className="text-sm font-bold text-black">RUN</span>
+          </div>
+
           {/* Walk button - higher z-index to ensure it receives touches */}
           <div
             id="walk-button"
@@ -134,6 +190,7 @@ const Controls = () => {
           <div className="p-3 bg-white bg-opacity-80 rounded-lg shadow-lg z-20 pointer-events-auto">
             <h3 className="text-md font-semibold mb-1">Controls:</h3>
             <p>Hold WALK button to move forward</p>
+            <p>Hold RUN button to sprint forward</p>
             <p>Drag anywhere to look around</p>
           </div>
         </div>

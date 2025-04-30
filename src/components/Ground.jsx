@@ -15,31 +15,58 @@ const Ground = ({ size = 100 }) => {
     canvas.height = 1024;
     const context = canvas.getContext('2d');
 
-    // Fill base color
-    context.fillStyle = '#507a46';
+    // Fill base color - darker for forest floor
+    context.fillStyle = '#3a5835';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add noise and variation
-    for (let i = 0; i < 40000; i++) {
+    // Add organic patterns
+    for (let i = 0; i < 2000; i++) {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const radius = Math.random() * 20 + 5;
+
+      // Forest floor patterns - more organic
+      const pattern = Math.random();
+      context.fillStyle = `rgba(
+        ${40 + Math.random() * 30},
+        ${45 + Math.random() * 35},
+        ${30 + Math.random() * 20},
+        ${0.1 + Math.random() * 0.3}
+      )`;
+
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    // Add noise and variation for detailed ground
+    for (let i = 0; i < 60000; i++) {
       const x = Math.random() * canvas.width;
       const y = Math.random() * canvas.height;
       const radius = Math.random() * 2 + 0.5;
 
-      // Random grass/dirt color
+      // Random forest floor color variations
       const colorVariation = Math.random();
-      if (colorVariation < 0.7) {
-        // Grass variations
+      if (colorVariation < 0.5) {
+        // Forest moss/grass variations
         context.fillStyle = `rgb(
-          ${80 + Math.random() * 40},
-          ${110 + Math.random() * 40},
-          ${60 + Math.random() * 30}
+          ${60 + Math.random() * 40},
+          ${80 + Math.random() * 50},
+          ${45 + Math.random() * 30}
+        )`;
+      } else if (colorVariation < 0.8) {
+        // Leaf litter and mulch variations
+        context.fillStyle = `rgb(
+          ${100 + Math.random() * 40},
+          ${80 + Math.random() * 30},
+          ${40 + Math.random() * 30}
         )`;
       } else {
-        // Dirt/stone variations
+        // Dark soil and shadow variations
         context.fillStyle = `rgb(
-          ${100 + Math.random() * 30},
-          ${90 + Math.random() * 20},
-          ${70 + Math.random() * 20}
+          ${60 + Math.random() * 20},
+          ${50 + Math.random() * 20},
+          ${30 + Math.random() * 20}
         )`;
       }
 
@@ -51,12 +78,12 @@ const Ground = ({ size = 100 }) => {
     // Create texture from canvas
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(size / 10, size / 10);
+    texture.repeat.set(size / 8, size / 8); // More detailed repeating
 
-    // Create bump map for slight texture
+    // Create bump map for forest floor texture
     const bumpMap = new THREE.CanvasTexture(canvas);
     bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
-    bumpMap.repeat.set(size / 10, size / 10);
+    bumpMap.repeat.set(size / 8, size / 8);
 
     groundTexture.current = { texture, bumpMap };
 
@@ -64,7 +91,7 @@ const Ground = ({ size = 100 }) => {
     if (meshRef.current) {
       meshRef.current.material.map = texture;
       meshRef.current.material.bumpMap = bumpMap;
-      meshRef.current.material.bumpScale = 0.05;
+      meshRef.current.material.bumpScale = 0.08; // Increased for more texture
       meshRef.current.material.needsUpdate = true;
     }
   }, [size]);
@@ -78,9 +105,9 @@ const Ground = ({ size = 100 }) => {
     >
       <planeGeometry args={[size, size, 128, 128]} />
       <meshStandardMaterial
-        color="#5d8c4e"
-        roughness={0.9}
-        metalness={0.1}
+        color="#3d5a38"
+        roughness={0.95}
+        metalness={0.05}
         receiveShadow
       />
     </mesh>

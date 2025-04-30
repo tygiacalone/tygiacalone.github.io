@@ -43,13 +43,34 @@ const SceneContent = () => {
 
   return (
     <>
-      <Sky sunPosition={[100, 20, 100]} />
-      <ambientLight intensity={0.5} />
+      <Sky
+        sunPosition={[100, 10, 100]}
+        turbidity={10}
+        rayleigh={1}
+        mieCoefficient={0.005}
+        mieDirectionalG={0.8}
+      />
+      <ambientLight intensity={0.3} /> {/* Darker for forest feel */}
       <directionalLight
-        position={[10, 10, 5]}
-        intensity={1}
+        position={[50, 30, 40]}
+        intensity={0.8}
         castShadow
-        shadow-mapSize={1024}
+        shadow-mapSize={2048}
+        shadow-bias={-0.0001}
+      >
+        <orthographicCamera
+          attach="shadow-camera"
+          args={[-30, 30, 30, -30, 0.1, 100]}
+        />
+      </directionalLight>
+      {/* Add some light shafts through trees */}
+      <spotLight
+        position={[10, 15, 0]}
+        angle={0.3}
+        penumbra={0.8}
+        intensity={0.5}
+        castShadow
+        color="#f8e8c0"
       />
       <Stats />
       <Player
