@@ -10,7 +10,10 @@ const createdObelisks = new Set();
 const RESUME_URL =
   'https://docs.google.com/document/d/1yArxUS0Yo0nNJ6fuuolZ6AsEmuvF0XITGVp6HdU1mVA/edit?usp=sharing';
 
-const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
+// Spawn position coordinates - center of the world
+const SPAWN_POSITION = new THREE.Vector3(0, 0, 0);
+
+const Obelisk = ({ position = [0, 0, 0] }) => {
   const bookRef = useRef();
   const baseRef = useRef();
   const glowRef = useRef();
@@ -29,7 +32,6 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
   // Track when the book was created
   const creationTimeRef = useRef(Date.now());
-  const [timeRemaining, setTimeRemaining] = useState(60); // 60 seconds lifespan
   const [hovered, setHovered] = useState(false);
   const [lastCollisionCheck, setLastCollisionCheck] = useState(0); // Prevent too frequent collision checks
   const [bookOpened, setBookOpened] = useState(false);
@@ -104,16 +106,20 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
     particlesRef.current.add(pointsSystem);
   }, []);
 
-  // Function to open resume in new tab
-  const openResume = () => {
-    console.log('Opening resume...');
+  // Function to teleport player to spawn point
+  const teleportToSpawn = () => {
+    console.log('Teleporting player to spawn point...');
     setBookOpened(true);
-    // Add a slight delay before opening
-    setTimeout(() => {
-      window.open(RESUME_URL, '_blank');
-      // Reset book state after a delay
-      setTimeout(() => setBookOpened(false), 1000);
-    }, 500);
+
+    // Get current player position to calculate teleport effect direction
+    const playerPosition = new THREE.Vector3();
+    camera.getWorldPosition(playerPosition);
+
+    // Update camera position to spawn point
+    camera.position.copy(SPAWN_POSITION);
+
+    // Reset book state after a delay
+    setTimeout(() => setBookOpened(false), 1000);
   };
 
   // Console log to debug - only run once per unique position
@@ -156,7 +162,7 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
       if (intersects.length > 0) {
         console.log('Book clicked!');
-        openResume();
+        teleportToSpawn();
       }
     };
 
@@ -172,19 +178,6 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
   // Animation and lifecycle
   useFrame((state, delta) => {
     if (!bookRef.current) return;
-
-    // Calculate remaining time
-    const elapsed = (Date.now() - creationTimeRef.current) / 1000;
-    const remaining = Math.max(0, 60 - elapsed);
-    setTimeRemaining(remaining);
-
-    // Trigger onExpire callback when time runs out
-    if (remaining <= 0 && onExpire) {
-      // Remove from the set to allow proper cleanup
-      createdObelisks.delete(obeliskId.current);
-      onExpire();
-      return;
-    }
 
     // Floating animation
     const floatY =
@@ -329,7 +322,7 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
       const distance = cameraPosition.distanceTo(bookPosition);
       if (distance < collisionRadiusRef.current) {
         console.log('Player walked into book!');
-        openResume();
+        teleportToSpawn();
       }
     }
   });

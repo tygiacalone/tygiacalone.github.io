@@ -3,22 +3,15 @@ import Peer from 'peerjs';
 import useGameStore from '../store/gameStore';
 import { nanoid } from 'nanoid';
 
-// Simple discovery server using broadcast channel for players on the same domain
-// This helps discover players without manual connection
-const DISCOVERY_CHANNEL = 'forest-game-discovery';
-const broadcastChannel =
-  typeof BroadcastChannel !== 'undefined'
-    ? new BroadcastChannel(DISCOVERY_CHANNEL)
-    : null;
-
 const usePeerConnection = () => {
   const [peer, setPeer] = useState(null);
   const [connections, setConnections] = useState({});
   const [isConnected, setIsConnected] = useState(false);
-  const [tabId] = useState(() => nanoid()); // Generate a unique ID for this tab
+  const [peerId, setPeerId] = useState(null);
   const connectionAttempts = useRef(0);
   const maxConnectionAttempts = 3;
   const discoveredPeers = useRef(new Set());
+  const roomId = 'forest-game-main'; // Shared room identifier
 
   const {
     playerId,
@@ -49,59 +42,7 @@ const usePeerConnection = () => {
     }
   }, [playerId, players, addPlayer, updatePlayerFlashlightState]);
 
-  // Setup broadcast channel for discovery
-  useEffect(() => {
-    if (!broadcastChannel) return;
-
-    // Announce self when connected
-    const announcePresence = () => {
-      if (peer && peer.id) {
-        console.log('Announcing presence to other tabs/windows');
-        broadcastChannel.postMessage({
-          type: 'peer-announce',
-          peerId: peer.id,
-        });
-      }
-    };
-
-    // Listen for other peer announcements
-    const handleDiscovery = (event) => {
-      if (event.data.type === 'peer-announce' && peer && peer.id) {
-        const discoveredPeerId = event.data.peerId;
-
-        // Don't connect to self or already connected peers
-        if (
-          discoveredPeerId !== peer.id &&
-          !discoveredPeers.current.has(discoveredPeerId)
-        ) {
-          console.log(`Discovered peer: ${discoveredPeerId}`);
-          discoveredPeers.current.add(discoveredPeerId);
-
-          // Connect to the discovered peer after a small random delay
-          // This helps prevent connection race conditions
-          setTimeout(() => {
-            connectToPeer(discoveredPeerId);
-          }, Math.random() * 1000);
-        }
-      }
-    };
-
-    // Regularly announce presence to help with discovery
-    const announceInterval = setInterval(announcePresence, 5000);
-    broadcastChannel.addEventListener('message', handleDiscovery);
-
-    // Initial announcement
-    if (peer && peer.id) {
-      announcePresence();
-    }
-
-    return () => {
-      clearInterval(announceInterval);
-      broadcastChannel.removeEventListener('message', handleDiscovery);
-    };
-  }, [peer]);
-
-  // Initialize peer connection with unique tab ID and reconnection logic
+  // Initialize peer connection with proper ICE servers for NAT traversal
   useEffect(() => {
     let newPeer = null;
     let reconnectTimeout = null;
@@ -113,7 +54,9 @@ const usePeerConnection = () => {
       }
 
       connectionAttempts.current += 1;
-      const peerIdWithTab = `${playerId}-${tabId}`;
+
+      // Generate a unique ID for this peer
+      const uniquePeerId = `forest-${playerId}-${nanoid(8)}`;
 
       try {
         // Cleanup previous peer if exists
@@ -121,30 +64,31 @@ const usePeerConnection = () => {
           newPeer.destroy();
         }
 
-        // Create new peer with options
-        newPeer = new Peer(peerIdWithTab, {
-          debug: 2, // Reduce debug level
+        // Create new peer with enhanced options for internet connectivity
+        newPeer = new Peer(uniquePeerId, {
+          debug: 1,
           config: {
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:global.stun.twilio.com:3478' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun3.l.google.com:19302' },
+              { urls: 'stun:stun4.l.google.com:19302' },
+              { urls: 'stun:stun.global.stun.twilio.com:3478' },
             ],
+            iceCandidatePoolSize: 10,
           },
         });
 
         newPeer.on('open', (id) => {
           console.log('My peer ID is: ', id);
           setPeer(newPeer);
+          setPeerId(id);
           setIsConnected(true);
           connectionAttempts.current = 0; // Reset counter on successful connection
 
-          // Announce presence when connected
-          if (broadcastChannel) {
-            broadcastChannel.postMessage({
-              type: 'peer-announce',
-              peerId: id,
-            });
-          }
+          // Connect to the presence server to announce ourselves
+          announceToPresenceServer(id);
         });
 
         newPeer.on('connection', handleConnection);
@@ -193,6 +137,49 @@ const usePeerConnection = () => {
       reconnectTimeout = setTimeout(initializePeer, 3000);
     };
 
+    // Announce to the presence server (simplified implementation using localStorage)
+    const announceToPresenceServer = (id) => {
+      try {
+        // Use localStorage as a temporary solution for peer discovery
+        // In production, you should use a real presence server or WebSocket
+        const existingPeers = JSON.parse(localStorage.getItem(roomId) || '[]');
+
+        // Filter out stale peers (older than 2 minutes)
+        const now = Date.now();
+        const activePeers = existingPeers.filter(
+          (p) => now - p.timestamp < 120000,
+        );
+
+        // Add ourselves to the list
+        activePeers.push({
+          peerId: id,
+          timestamp: now,
+        });
+
+        // Save the updated list
+        localStorage.setItem(roomId, JSON.stringify(activePeers));
+
+        // Connect to all existing peers
+        activePeers.forEach((peer) => {
+          if (peer.peerId !== id) {
+            connectToPeer(peer.peerId);
+          }
+        });
+
+        // Set up interval to refresh our presence and discover new peers
+        const announceInterval = setInterval(() => {
+          if (newPeer && newPeer.id) {
+            announceToPresenceServer(newPeer.id);
+          }
+        }, 20000);
+
+        // Cleanup interval on unmount
+        return () => clearInterval(announceInterval);
+      } catch (err) {
+        console.error('Error announcing to presence server:', err);
+      }
+    };
+
     // Start the initial connection
     initializePeer();
 
@@ -203,13 +190,28 @@ const usePeerConnection = () => {
 
       if (newPeer) {
         try {
+          // Before destroying the peer, remove ourselves from the presence server
+          if (newPeer.id) {
+            try {
+              const existingPeers = JSON.parse(
+                localStorage.getItem(roomId) || '[]',
+              );
+              const filteredPeers = existingPeers.filter(
+                (p) => p.peerId !== newPeer.id,
+              );
+              localStorage.setItem(roomId, JSON.stringify(filteredPeers));
+            } catch (err) {
+              console.error('Error removing peer from presence server:', err);
+            }
+          }
+
           newPeer.destroy();
         } catch (err) {
           console.error('Error destroying peer on cleanup:', err);
         }
       }
     };
-  }, [playerId, tabId]);
+  }, [playerId]);
 
   // Handle new connections
   const handleConnection = (conn) => {
@@ -230,7 +232,7 @@ const usePeerConnection = () => {
 
       // Send data about all other connected players
       Object.entries(players).forEach(([id, player]) => {
-        if (id !== playerId && id !== conn.peer) {
+        if (id !== playerId && player.peerId !== conn.peer) {
           conn.send({
             type: 'player-data',
             player,
@@ -257,12 +259,22 @@ const usePeerConnection = () => {
       // Handle disconnection
       conn.on('close', () => {
         console.log('Connection closed with peer:', conn.peer);
-        removePlayer(conn.peer);
+
+        // Find the player associated with this connection
+        const playerToRemove = Object.values(players).find(
+          (player) => player.peerId === conn.peer,
+        );
+
+        if (playerToRemove) {
+          removePlayer(playerToRemove.id);
+        }
+
         setConnections((prev) => {
           const newConnections = { ...prev };
           delete newConnections[conn.peer];
           return newConnections;
         });
+
         // Remove from discovered peers
         discoveredPeers.current.delete(conn.peer);
       });
@@ -292,13 +304,17 @@ const usePeerConnection = () => {
   const handleIncomingData = (data, senderId) => {
     switch (data.type) {
       case 'player-data':
-        addPlayer(senderId, { ...data.player, id: senderId });
+        // Store the peer ID with the player for better connection handling
+        addPlayer(data.player.id, {
+          ...data.player,
+          peerId: senderId,
+        });
         break;
       case 'player-position':
-        updatePlayerPosition(senderId, data.position, data.rotation);
+        updatePlayerPosition(data.playerId, data.position, data.rotation);
         break;
       case 'player-flashlight':
-        updatePlayerFlashlightState(senderId, data.flashlightOn);
+        updatePlayerFlashlightState(data.playerId, data.flashlightOn);
         break;
       case 'peer-list':
         // Connect to peers we didn't know about
@@ -330,7 +346,10 @@ const usePeerConnection = () => {
 
     conn.send({
       type: 'player-data',
-      player: myPlayer,
+      player: {
+        ...myPlayer,
+        peerId: peerId, // Include our peer ID
+      },
     });
   };
 
@@ -353,6 +372,7 @@ const usePeerConnection = () => {
 
     broadcastData({
       type: 'player-position',
+      playerId: playerId,
       position,
       rotation,
     });
@@ -364,6 +384,7 @@ const usePeerConnection = () => {
 
     broadcastData({
       type: 'player-flashlight',
+      playerId: playerId,
       flashlightOn,
     });
   };
