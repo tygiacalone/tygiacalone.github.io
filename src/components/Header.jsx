@@ -5,7 +5,7 @@ const Header = () => {
 
   return (
     <header className="border-b border-black py-6 pr-4">
-      <div className="text-black text-4xl font-roboto font-thin inline float-left leading-none relative">
+      <div className="text-black text-4xl font-roboto font-thin inline float-left leading-none relative ">
         <Link
           to="/"
           className="no-underline text-inherit border-b-0 hover:bg-white"
