@@ -7,7 +7,7 @@ const Controls = () => {
   const [lastTouchPosition, setLastTouchPosition] = useState({ x: 0, y: 0 });
   const [lookActive, setLookActive] = useState(false);
 
-  const { moveForward, updateCameraRotation, toggleRun } =
+  const { moveForward, updateCameraRotation, toggleRun, toggleJump } =
     usePlayerControlsContext();
 
   // Handle mobile look controls
@@ -15,7 +15,12 @@ const Controls = () => {
     if (!isMobile) return;
 
     // Check if touch is on walk button area and ignore if it is
-    if (isWalkButtonTouch(event) || isRunButtonTouch(event)) return;
+    if (
+      isWalkButtonTouch(event) ||
+      isRunButtonTouch(event) ||
+      isJumpButtonTouch(event)
+    )
+      return;
 
     console.log('Look touch start detected');
     const touch = event.touches[0];
@@ -87,6 +92,12 @@ const Controls = () => {
     toggleRun(false);
   };
 
+  // Handle jump button press
+  const handleJumpButtonPress = () => {
+    console.log('Jump button pressed');
+    toggleJump();
+  };
+
   // Helper function to determine if a touch is on the walk button
   const isWalkButtonTouch = (event) => {
     const walkButtonElement = document.getElementById('walk-button');
@@ -119,6 +130,22 @@ const Controls = () => {
     );
   };
 
+  // Helper function to determine if a touch is on the jump button
+  const isJumpButtonTouch = (event) => {
+    const jumpButtonElement = document.getElementById('jump-button');
+    if (!jumpButtonElement) return false;
+
+    const touch = event.touches[0];
+    const buttonRect = jumpButtonElement.getBoundingClientRect();
+
+    return (
+      touch.clientX >= buttonRect.left &&
+      touch.clientX <= buttonRect.right &&
+      touch.clientY >= buttonRect.top &&
+      touch.clientY <= buttonRect.bottom
+    );
+  };
+
   // Prevent propagation of touch events from walk button to the look area
   const handleWalkButtonTouch = (event) => {
     // Stop propagation to prevent the look area from handling this touch
@@ -127,6 +154,12 @@ const Controls = () => {
 
   // Prevent propagation of touch events from run button to the look area
   const handleRunButtonTouch = (event) => {
+    // Stop propagation to prevent the look area from handling this touch
+    event.stopPropagation();
+  };
+
+  // Prevent propagation of touch events from jump button to the look area
+  const handleJumpButtonTouch = (event) => {
     // Stop propagation to prevent the look area from handling this touch
     event.stopPropagation();
   };
@@ -165,6 +198,18 @@ const Controls = () => {
             <span className="text-sm font-bold text-black">RUN</span>
           </div>
 
+          {/* Jump button - to the right of run button, slightly below */}
+          <div
+            id="jump-button"
+            className="absolute bottom-44 left-28 w-20 h-20 rounded-full bg-green-400 bg-opacity-50 flex items-center justify-center z-50 active:bg-opacity-70 select-none"
+            onTouchStart={(e) => {
+              handleJumpButtonTouch(e);
+              handleJumpButtonPress();
+            }}
+          >
+            <span className="text-sm font-bold text-black">JUMP</span>
+          </div>
+
           {/* Walk button - higher z-index to ensure it receives touches */}
           <div
             id="walk-button"
@@ -191,6 +236,7 @@ const Controls = () => {
             <h3 className="text-md font-semibold mb-1">Controls:</h3>
             <p>Hold WALK button to move forward</p>
             <p>Hold RUN button to sprint forward</p>
+            <p>Press JUMP button to jump</p>
             <p>Drag anywhere to look around</p>
           </div>
         </div>

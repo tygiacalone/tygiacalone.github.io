@@ -74,6 +74,15 @@ export const PlayerControlsProvider = ({ children }) => {
     setMovement((m) => ({ ...m, run: isRunning }));
   };
 
+  // Function to trigger jump for mobile controls
+  const toggleJump = () => {
+    setMovement((m) => ({ ...m, jump: true }));
+    // Reset jump after a short delay
+    setTimeout(() => {
+      setMovement((m) => ({ ...m, jump: false }));
+    }, 200);
+  };
+
   // Handle keyboard controls
   React.useEffect(() => {
     const handleKeyDown = (e) => {
@@ -181,6 +190,7 @@ export const PlayerControlsProvider = ({ children }) => {
     cameraChanged,
     updateCameraRotation,
     toggleRun,
+    toggleJump,
   };
 
   return (
