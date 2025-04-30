@@ -167,9 +167,13 @@ const Controls = () => {
         />
 
         {/* Mobile controls info */}
-        <div className="absolute top-4 right-4 p-3 bg-black bg-opacity-50 rounded-lg text-white text-xs z-50 pointer-events-none">
-          <p>Use joystick to move</p>
-          <p>Drag anywhere else to look around</p>
+
+        <div className="absolute bottom-4 left-4 p-3 bg-white bg-opacity-80 rounded-lg shadow-lg z-20 pointer-events-auto">
+          <h3 className="text-md font-semibold mb-1">Controls:</h3>
+          <ul className="text-sm space-y-1">
+            <p>Use joystick to move</p>
+            <p>Drag anywhere else to look around</p>
+          </ul>
         </div>
       </div>
     );
