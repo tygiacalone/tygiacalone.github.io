@@ -6,11 +6,16 @@ import { Text } from '@react-three/drei';
 // Static counter to generate unique IDs and track created obelisks
 const createdObelisks = new Set();
 
+// Resume URL - Google Docs link
+const RESUME_URL =
+  'https://docs.google.com/document/d/1yArxUS0Yo0nNJ6fuuolZ6AsEmuvF0XITGVp6HdU1mVA/edit?usp=sharing';
+
 const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
   const obeliskRef = useRef();
   const baseRef = useRef();
   const glowRef = useRef();
-  const textRef = useRef();
+  const textGroupRef = useRef();
+  const collisionRadiusRef = useRef(1.5); // Collision radius for "walking into" functionality
   const { camera, raycaster, mouse, scene, gl } = useThree();
 
   // Store the initial position in a ref to avoid reacting to prop changes
@@ -23,11 +28,18 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
   const creationTimeRef = useRef(Date.now());
   const [timeRemaining, setTimeRemaining] = useState(60); // 60 seconds lifespan
   const [hovered, setHovered] = useState(false);
+  const [lastCollisionCheck, setLastCollisionCheck] = useState(0); // Prevent too frequent collision checks
 
   // Floating animation values
   const floatOffset = useRef(Math.random() * Math.PI * 2);
   const floatHeight = useRef(0.3 + Math.random() * 0.2);
   const floatSpeed = useRef(0.5 + Math.random() * 0.3);
+
+  // Function to open resume in new tab
+  const openResume = () => {
+    console.log('Opening resume...');
+    window.open(RESUME_URL, '_blank');
+  };
 
   // Console log to debug - only run once per unique position
   useEffect(() => {
@@ -64,8 +76,7 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
       if (intersects.length > 0) {
         console.log('Obelisk clicked!');
-        // Redirect to resume page
-        window.open('/resume', '_blank');
+        openResume();
       }
     };
 
@@ -129,10 +140,41 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
     const intersects = raycaster.intersectObject(obeliskRef.current, true);
     setHovered(intersects.length > 0);
 
-    // Scale text with hover
-    if (textRef.current) {
+    // Counter-rotate text group to keep all text elements static relative to the camera
+    if (textGroupRef.current && obeliskRef.current) {
+      // Apply counter-rotation to the text group
+      textGroupRef.current.rotation.y = -obeliskRef.current.rotation.y;
+
+      // Scale text with hover
       const scale = hovered ? 1.2 : 1;
-      textRef.current.scale.set(scale, scale, scale);
+      textGroupRef.current.scale.set(scale, scale, scale);
+    }
+
+    // Walk-into collision detection (check every 200ms)
+    const now = Date.now();
+    if (now - lastCollisionCheck > 200) {
+      setLastCollisionCheck(now);
+
+      // Calculate distance between player (camera) and obelisk
+      const cameraPosition = new THREE.Vector3();
+      camera.getWorldPosition(cameraPosition);
+
+      // Get obelisk position (adjust for height)
+      const obeliskPosition = new THREE.Vector3(
+        initialPositionRef.current[0],
+        initialPositionRef.current[1],
+        initialPositionRef.current[2],
+      );
+
+      // Only compare XZ distance (horizontal plane)
+      cameraPosition.y = obeliskPosition.y;
+
+      // Check if player is within collision radius
+      const distance = cameraPosition.distanceTo(obeliskPosition);
+      if (distance < collisionRadiusRef.current) {
+        console.log('Player walked into obelisk!');
+        openResume();
+      }
     }
   });
 
@@ -217,21 +259,36 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
           />
         </mesh>
 
-        {/* Text label */}
-        <Text
-          ref={textRef}
-          position={[0, 0, 0.9]} // More forward
-          rotation={[0, 0, 0]}
-          fontSize={0.3} // Larger text
-          color="#00AAFF" // Brighter blue
-          anchorX="center"
-          anchorY="middle"
-          fontWeight="bold"
-          outlineWidth={0.03} // Add outline
-          outlineColor="#FFFFFF"
-        >
-          Ty's Resume
-        </Text>
+        {/* Text group that counter-rotates as a whole */}
+        <group ref={textGroupRef} position={[0, 0, 0.9]}>
+          {/* Title text */}
+          <Text
+            position={[0, 0, 0]}
+            fontSize={0.3}
+            color="#00AAFF"
+            anchorX="center"
+            anchorY="middle"
+            fontWeight="bold"
+            outlineWidth={0.03}
+            outlineColor="#FFFFFF"
+          >
+            Ty's Resume
+          </Text>
+
+          {/* Instruction text */}
+          <Text
+            position={[0, -0.5, 0]}
+            fontSize={0.2}
+            color="#FFFFFF"
+            anchorX="center"
+            anchorY="middle"
+            fontWeight="bold"
+            outlineWidth={0.02}
+            outlineColor="#00AAFF"
+          >
+            Touch obelisk to read
+          </Text>
+        </group>
       </group>
 
       {/* Point light for glow */}
