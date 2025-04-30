@@ -103,7 +103,7 @@ const Player = ({
       </mesh>
 
       {/* Player face */}
-      <group ref={faceRef} position={[0, 0.8, 0.2]}>
+      <group ref={faceRef} position={[0, 0.8, -0.2]}>
         {/* Face base */}
         <mesh castShadow>
           <boxGeometry args={[0.3, 0.3, 0.1]} />
@@ -111,19 +111,19 @@ const Player = ({
         </mesh>
 
         {/* Left eye */}
-        <mesh position={[-0.08, 0.05, 0.06]} castShadow>
+        <mesh position={[-0.08, 0.05, -0.06]} castShadow>
           <sphereGeometry args={[0.04, 8, 8]} />
           <meshStandardMaterial color="#000000" />
         </mesh>
 
         {/* Right eye */}
-        <mesh position={[0.08, 0.05, 0.06]} castShadow>
+        <mesh position={[0.08, 0.05, -0.06]} castShadow>
           <sphereGeometry args={[0.04, 8, 8]} />
           <meshStandardMaterial color="#000000" />
         </mesh>
 
         {/* Mouth */}
-        <mesh position={[0, -0.07, 0.06]} castShadow>
+        <mesh position={[0, -0.07, -0.06]} castShadow>
           <boxGeometry args={[0.15, 0.03, 0.01]} />
           <meshStandardMaterial color="#000000" />
         </mesh>
