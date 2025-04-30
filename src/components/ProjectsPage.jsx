@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import ProjectItem from './ProjectItem';
-import ProjectDetail from './ProjectDetail';
-
 const ProjectsPage = () => {
-  return <div className="w-full flex flex-wrap">Ty</div>;
+  return (
+    <div className="w-full flex flex-wrap">
+      <div className="w-1/2">
+        <h1>Projects</h1>
+      </div>
+    </div>
+  );
 };
 
 export default ProjectsPage;
