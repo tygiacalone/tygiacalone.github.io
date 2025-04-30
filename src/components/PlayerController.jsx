@@ -31,7 +31,8 @@ const PlayerController = () => {
     ),
   );
   const isJumpingRef = useRef(false);
-  const rotationYRef = useRef(0);
+  const rotationRef = useRef({ x: 0, y: 0, z: 0 });
+  const lastRotationUpdateRef = useRef(0);
 
   // Camera wobble refs
   const wobbleTimeRef = useRef(0);
@@ -52,7 +53,9 @@ const PlayerController = () => {
         z: positionRef.current.z,
       },
       rotation: {
-        y: cameraView.y, // Initialize player rotation to camera view
+        x: 0,
+        y: cameraView.y,
+        z: 0,
       },
       // Initialize with flashlight on
       flashlightOn: true,
@@ -89,8 +92,12 @@ const PlayerController = () => {
       isJumpingRef.current = true;
     }
 
-    // Update player rotation to match camera view (only Y-axis)
-    rotationYRef.current = cameraView.y;
+    // Update player rotation to match camera view (full rotation)
+    rotationRef.current = {
+      x: state.camera.rotation.x,
+      y: state.camera.rotation.y,
+      z: state.camera.rotation.z,
+    };
 
     // Calculate movement direction based on camera view
     const direction = new THREE.Vector3();
@@ -171,12 +178,26 @@ const PlayerController = () => {
     setIsMoving(isMovingOnGround);
     setIsRunning(movement.run && isMovingOnGround);
 
-    // Update network position (only if player moved)
-    if (velocityRef.current.length() > 0.01) {
+    // Update network position and rotation
+    // Check if there's significant movement or rotation change
+    const now = performance.now();
+    const rotationChanged =
+      Math.abs(state.camera.rotation.y - lastRotationUpdateRef.current) > 0.01;
+    const shouldUpdateNetwork =
+      velocityRef.current.length() > 0.01 ||
+      rotationChanged ||
+      now - lastRotationUpdateRef.current > 100;
+
+    if (shouldUpdateNetwork) {
       updatePosition(
         { x: position.x, y: position.y, z: position.z },
-        { y: rotationYRef.current },
+        {
+          x: state.camera.rotation.x,
+          y: state.camera.rotation.y,
+          z: state.camera.rotation.z,
+        },
       );
+      lastRotationUpdateRef.current = state.camera.rotation.y;
     }
 
     // Update camera position to follow player
@@ -218,7 +239,7 @@ const PlayerController = () => {
           positionRef.current.y,
           positionRef.current.z,
         ]}
-        rotation={[0, rotationYRef.current, 0]} // Player always faces camera direction
+        rotation={[0, rotationRef.current.y, 0]} // Player rotates only on y-axis for physics
       >
         {/* Physics collider - invisible */}
         <mesh visible={false}>

@@ -10,6 +10,9 @@ const Player = ({
   onPositionChange,
 }) => {
   const playerRef = useRef();
+  const faceRef = useRef();
+  const leftArmRef = useRef();
+  const rightArmRef = useRef();
   const velocityRef = useRef(new THREE.Vector3());
   const targetPositionRef = useRef(new THREE.Vector3());
   const [isVisible, setIsVisible] = useState(true);
@@ -52,12 +55,28 @@ const Player = ({
 
       // Smoothly rotate towards target rotation
       if (rotation) {
+        // Player body rotates only on Y axis (facing direction)
         const targetRotationY = rotation.y;
         playerRef.current.rotation.y = THREE.MathUtils.lerp(
           playerRef.current.rotation.y,
           targetRotationY,
           lerpFactor,
         );
+      }
+    }
+
+    // Update face direction to match the full player rotation
+    if (faceRef.current && rotation) {
+      // Apply x rotation (looking up/down) and y rotation (looking left/right)
+      faceRef.current.rotation.x = rotation.x;
+      // Face already points forward, just need to adjust for head tilt
+
+      // Animate arms slightly based on rotation
+      if (leftArmRef.current && rightArmRef.current) {
+        // Adjust arm positioning based on looking up/down
+        const armTilt = Math.max(-0.3, Math.min(0.3, rotation.x));
+        leftArmRef.current.rotation.x = armTilt;
+        rightArmRef.current.rotation.x = armTilt;
       }
     }
   });
@@ -89,10 +108,52 @@ const Player = ({
       </mesh>
 
       {/* Player "face" indication - to show which way they're looking */}
-      <mesh position={[0, 0.25, 0.2]} castShadow>
-        <boxGeometry args={[0.15, 0.08, 0.08]} />
-        <meshStandardMaterial color="#000000" />
-      </mesh>
+      <group ref={faceRef} position={[0, 0.25, 0.2]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.15, 0.08, 0.08]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+      </group>
+
+      {/* Left arm */}
+      <group
+        ref={leftArmRef}
+        position={[-0.3, 0.1, 0]}
+        rotation={[0, 0, -Math.PI / 6]}
+      >
+        <mesh castShadow>
+          <capsuleGeometry args={[0.05, 0.3, 4, 8]} />
+          <meshStandardMaterial
+            color={isLocalPlayer ? '#4285F4' : '#DB4437'}
+            roughness={0.6}
+          />
+        </mesh>
+        {/* Left hand */}
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshStandardMaterial color="#E8BEAC" roughness={0.7} />
+        </mesh>
+      </group>
+
+      {/* Right arm */}
+      <group
+        ref={rightArmRef}
+        position={[0.3, 0.1, 0]}
+        rotation={[0, 0, Math.PI / 6]}
+      >
+        <mesh castShadow>
+          <capsuleGeometry args={[0.05, 0.3, 4, 8]} />
+          <meshStandardMaterial
+            color={isLocalPlayer ? '#4285F4' : '#DB4437'}
+            roughness={0.6}
+          />
+        </mesh>
+        {/* Right hand */}
+        <mesh position={[0, -0.2, 0]} castShadow>
+          <sphereGeometry args={[0.06, 8, 8]} />
+          <meshStandardMaterial color="#E8BEAC" roughness={0.7} />
+        </mesh>
+      </group>
 
       {/* Player ID above head */}
       <group position={[0, 1, 0]}>

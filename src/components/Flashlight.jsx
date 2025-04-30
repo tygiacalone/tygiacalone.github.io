@@ -194,9 +194,16 @@ const PlayerFlashlight = ({ position, rotation, isOn, isLocalPlayer }) => {
     let sourcePosition = new THREE.Vector3();
 
     if (isLocalPlayer) {
-      // For local player, use camera direction and position
+      // For local player, use camera direction
       forwardDirection.applyQuaternion(camera.quaternion);
+
+      // Position the flashlight in front of the player body (chest level)
+      // Start from camera position but lower it to chest level
       sourcePosition.copy(camera.position);
+      sourcePosition.y -= 0.4; // Lower from eye level to chest level
+
+      // Move the light source slightly forward from the player body
+      sourcePosition.add(forwardDirection.clone().multiplyScalar(0.3));
     } else {
       // For other players, use their rotation and position
       // Convert rotation.y to quaternion
@@ -204,8 +211,12 @@ const PlayerFlashlight = ({ position, rotation, isOn, isLocalPlayer }) => {
       quaternion.setFromEuler(new THREE.Euler(0, rotation.y, 0));
       forwardDirection.applyQuaternion(quaternion);
 
-      // Use player position but raise slightly to eye level
-      sourcePosition.set(position.x, position.y + 1.5, position.z);
+      // Position the flashlight at chest level in front of the player
+      sourcePosition.set(
+        position.x + forwardDirection.x * 0.3, // Move 0.3 units forward from player
+        position.y + 0.8, // Chest level (about 0.8 units up from feet)
+        position.z + forwardDirection.z * 0.3, // Move 0.3 units forward from player
+      );
     }
 
     // Store direction and position for particles

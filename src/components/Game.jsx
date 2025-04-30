@@ -130,31 +130,6 @@ const Game = () => {
 
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden">
-      {/* Connection UI */}
-      <ConnectionManager />
-
-      {/* Controls Info */}
-      <div className="absolute bottom-4 left-4 p-3 bg-white bg-opacity-80 rounded-lg shadow-lg max-w-xs z-10">
-        <h3 className="text-md font-semibold mb-1">Controls:</h3>
-        <ul className="text-xs space-y-1">
-          <li>
-            <strong>W/S</strong> - Move forward/backward
-          </li>
-          <li>
-            <strong>A/D</strong> - Rotate player left/right
-          </li>
-          <li>
-            <strong>MOUSE</strong> - Look around (free camera)
-          </li>
-          <li>
-            <strong>SPACE</strong> - Jump
-          </li>
-          <li>
-            <strong>SHIFT</strong> - Run
-          </li>
-        </ul>
-      </div>
-
       {/* 3D Canvas */}
       <Canvas
         style={{
@@ -222,6 +197,35 @@ const Game = () => {
           <LightningManager />
         </Suspense>
       </Canvas>
+
+      {/* UI Overlays */}
+      {/* Connection UI */}
+      <ConnectionManager />
+
+      {/* Controls Info */}
+      <div className="absolute bottom-4 left-4 p-3 bg-white bg-opacity-80 rounded-lg shadow-lg max-w-xs z-10">
+        <h3 className="text-md font-semibold mb-1">Controls:</h3>
+        <ul className="text-xs space-y-1">
+          <li>
+            <strong>W/S</strong> - Move forward/backward
+          </li>
+          <li>
+            <strong>A/D</strong> - Rotate player left/right
+          </li>
+          <li>
+            <strong>MOUSE</strong> - Look around (free camera)
+          </li>
+          <li>
+            <strong>SPACE</strong> - Jump
+          </li>
+          <li>
+            <strong>SHIFT</strong> - Run
+          </li>
+          <li>
+            <strong>F</strong> - Toggle flashlight
+          </li>
+        </ul>
+      </div>
     </div>
   );
 };
