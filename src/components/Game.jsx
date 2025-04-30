@@ -16,11 +16,12 @@ import LightningManager from './LightningManager';
 import useGameStore from '../store/gameStore';
 import { isMobile } from 'react-device-detect';
 
-// Function to calculate sun position based on time
-const calculateSunPosition = (date) => {
-  // Get hours in Seattle time (UTC-7 or UTC-8 depending on DST)
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
+// Function to calculate sun position based on local time
+const calculateSunPosition = () => {
+  // Get current local time
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
   const timeDecimal = hours + minutes / 60;
 
   // Map 24 hours to a full 360° rotation (π*2)
@@ -39,25 +40,42 @@ const calculateSunPosition = (date) => {
   return [x, y, z];
 };
 
-// Calculate light intensity based on time
-const calculateLightIntensity = (date) => {
-  const hours = date.getHours();
-  const isDaytime = hours >= 6 && hours <= 18;
+// Calculate light intensity based on local time
+const calculateLightIntensity = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const timeDecimal = hours + minutes / 60;
 
   // Full intensity at noon, low at midnight
-  if (isDaytime) {
-    const noonDist = Math.abs(hours - 12);
-    return 1 - (noonDist / 12) * 0.5; // Range from 0.5 to 1 during day
+  if (hours >= 6 && hours < 18) {
+    // Daytime: peak at noon (12:00)
+    const noonDistance = Math.abs(timeDecimal - 12);
+    // Scale from 0.5 to 1 during day, with maximum at noon
+    return 1 - (noonDistance / 6) * 0.5;
+  } else if (hours >= 18 && hours < 20) {
+    // Sunset transition: 6pm-8pm
+    return 0.5 - ((timeDecimal - 18) / 2) * 0.3;
+  } else if (hours >= 4 && hours < 6) {
+    // Sunrise transition: 4am-6am
+    return 0.2 + ((timeDecimal - 4) / 2) * 0.3;
   } else {
-    return 0.2; // Low intensity at night
+    // Nighttime: 8pm-4am
+    return 0.2;
   }
+};
+
+// Check if it's nighttime based on local time
+const isNighttimeNow = () => {
+  const hours = new Date().getHours();
+  return hours >= 18 || hours < 6;
 };
 
 const Game = () => {
   const [sunPosition, setSunPosition] = useState([0, 1, 0]);
   const [lightIntensity, setLightIntensity] = useState(1);
-  const [isNighttime, setIsNighttime] = useState(false);
-  const [flashlightOn, setFlashlightOn] = useState(true);
+  const [isNighttime, setIsNighttime] = useState(isNighttimeNow());
+  const [flashlightOn, setFlashlightOn] = useState(isNighttimeNow());
   const { playerId, players, updatePlayerFlashlightState, addPlayer } =
     useGameStore();
 
@@ -73,38 +91,38 @@ const Game = () => {
         id: playerId,
         position: { x: 0, y: 1, z: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        flashlightOn: true, // Start with flashlight ON
+        flashlightOn: isNighttime, // Turn flashlight on if it's nighttime
       });
     }
-  }, [playerId, players, addPlayer]);
+  }, [playerId, players, addPlayer, isNighttime]);
 
   useEffect(() => {
     // Function to update lighting
     const updateLighting = () => {
-      // Create date object in Seattle timezone
-      const seattleTime = new Date(
-        new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      );
-
-      // Update state based on time
-      setSunPosition(calculateSunPosition(seattleTime));
-      setLightIntensity(calculateLightIntensity(seattleTime));
-      const nighttime =
-        seattleTime.getHours() >= 18 || seattleTime.getHours() < 6;
-      setIsNighttime(nighttime);
+      // Update state based on current local time
+      setSunPosition(calculateSunPosition());
+      setLightIntensity(calculateLightIntensity());
+      const nighttime = isNighttimeNow();
 
       // Turn flashlight on automatically at night if it's the first time entering night
       if (nighttime && !isNighttime) {
         setFlashlightOn(true);
+        // Update the player's flashlight state in the game store
+        if (playerId) {
+          updatePlayerFlashlightState(playerId, true);
+        }
       }
+
+      setIsNighttime(nighttime);
     };
 
     // Update immediately and then set interval
     updateLighting();
-    const interval = setInterval(updateLighting, 60000); // Update every minute
+    // Update more frequently for smoother transitions - every 10 seconds
+    const interval = setInterval(updateLighting, 10000);
 
     return () => clearInterval(interval);
-  }, [isNighttime]);
+  }, [isNighttime, playerId, updatePlayerFlashlightState]);
 
   // Handle flashlight toggle with F key
   useEffect(() => {
@@ -130,16 +148,15 @@ const Game = () => {
   }, [playerId, updatePlayerFlashlightState]);
 
   return (
-    <div className="w-full h-full">
-      {/* 3D Canvas */}
+    <div className="w-screen h-screen">
       <Canvas
-        style={{
-          width: '100%',
-          height: '100%',
-          zIndex: 1,
+        camera={{
+          position: [0, 8, 20], // Raised and pulled back for a better view of the ravine
+          fov: 75,
+          near: 0.1,
+          far: 1000,
         }}
-        shadows="soft"
-        camera={{ position: [0, 1.5, 5], fov: 75 }}
+        shadows
       >
         <SoftShadows size={25} samples={16} focus={0.5} />
 

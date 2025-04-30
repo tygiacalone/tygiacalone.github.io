@@ -21,21 +21,18 @@ const SPAWN_RADIUS = 5; // Radius of spawn circle
 const SPAWN_CENTER_X = 0; // Center X coordinate of spawn area
 const SPAWN_CENTER_Z = 0; // Center Z coordinate of spawn area
 
-// Generate a spawn position within the spawn circle
+// Generate a spawn position within the ravine
 const generateSpawnPosition = () => {
-  // Random angle around the circle
-  const angle = Math.random() * Math.PI * 2;
+  // Random angle but restricted to forward/backward in ravine direction
+  const angle = Math.random() * Math.PI * 0.5 - Math.PI * 0.25; // -45 to 45 degrees
 
-  // Random distance from center (with slight variation)
-  const distance = SPAWN_RADIUS * 0.5 + Math.random() * (SPAWN_RADIUS * 0.5);
-
-  // Calculate position using polar coordinates
-  const x = SPAWN_CENTER_X + Math.cos(angle) * distance;
-  const z = SPAWN_CENTER_Z + Math.sin(angle) * distance;
+  // Position along the center of the ravine with slight variation
+  const x = Math.random() * 4 - 2; // Smaller variation across the narrower ravine (-2 to 2)
+  const z = SPAWN_CENTER_Z - 5 + Math.random() * 10; // Along the ravine
 
   return new THREE.Vector3(
     x,
-    1, // Fixed Y position (above ground)
+    -3, // Spawn at ravine floor level, adjusted for the deeper ravine
     z,
   );
 };

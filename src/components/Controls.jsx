@@ -1,95 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import nipplejs from 'nipplejs';
+import React, { useRef, useState } from 'react';
 import { isMobile } from 'react-device-detect';
 import { usePlayerControlsContext } from '../contexts/PlayerControlsContext';
 
 const Controls = () => {
-  const joystickContainerRef = useRef(null);
-  const joystickInstanceRef = useRef(null);
   const lookAreaRef = useRef(null);
   const [lastTouchPosition, setLastTouchPosition] = useState({ x: 0, y: 0 });
   const [lookActive, setLookActive] = useState(false);
 
-  const {
-    moveForward,
-    moveBackward,
-    moveLeft,
-    moveRight,
-    updateCameraRotation,
-  } = usePlayerControlsContext();
-
-  // Handle joystick for movement controls
-  useEffect(() => {
-    if (
-      isMobile &&
-      joystickContainerRef.current &&
-      !joystickInstanceRef.current
-    ) {
-      console.log('Creating mobile joystick');
-
-      // Create joystick for mobile controls
-      joystickInstanceRef.current = nipplejs.create({
-        zone: joystickContainerRef.current,
-        mode: 'static',
-        position: { left: '50%', top: '50%' },
-        color: 'white',
-        size: 100,
-        fadeTime: 100, // Smooth fade on release
-        restOpacity: 0.5, // Slightly visible when not active
-      });
-
-      // Handle joystick events
-      joystickInstanceRef.current.on('move', (evt, data) => {
-        const angle = data.angle.radian;
-        const force = Math.min(data.force, 1);
-
-        // Reset all movement
-        moveForward(0);
-        moveBackward(0);
-        moveLeft(0);
-        moveRight(0);
-
-        // Apply movement based on joystick direction
-        if (angle >= Math.PI * 0.75 && angle < Math.PI * 1.25) {
-          // Left
-          moveLeft(force);
-        } else if (angle >= Math.PI * 1.25 && angle < Math.PI * 1.75) {
-          // Down
-          moveBackward(force);
-        } else if (angle >= Math.PI * 1.75 || angle < Math.PI * 0.25) {
-          // Right
-          moveRight(force);
-        } else if (angle >= Math.PI * 0.25 && angle < Math.PI * 0.75) {
-          // Up
-          moveForward(force);
-        }
-      });
-
-      joystickInstanceRef.current.on('end', () => {
-        // Smoothly stop all movement when joystick is released
-        moveForward(0);
-        moveBackward(0);
-        moveLeft(0);
-        moveRight(0);
-
-        console.log('Joystick released, stopping movement');
-      });
-    }
-
-    return () => {
-      if (joystickInstanceRef.current) {
-        joystickInstanceRef.current.destroy();
-        joystickInstanceRef.current = null;
-      }
-    };
-  }, [isMobile, moveForward, moveBackward, moveLeft, moveRight]);
+  const { moveForward, updateCameraRotation } = usePlayerControlsContext();
 
   // Handle mobile look controls
   const handleTouchStart = (event) => {
     if (!isMobile) return;
 
-    // Check if touch is on joystick area and ignore if it is
-    if (isJoystickTouch(event)) return;
+    // Check if touch is on walk button area and ignore if it is
+    if (isWalkButtonTouch(event)) return;
 
     console.log('Look touch start detected');
     const touch = event.touches[0];
@@ -137,23 +62,35 @@ const Controls = () => {
     event.preventDefault();
   };
 
-  // Helper function to determine if a touch is on the joystick
-  const isJoystickTouch = (event) => {
-    if (!joystickContainerRef.current) return false;
+  // Handle walk button press/release
+  const handleWalkButtonPress = () => {
+    console.log('Walk button pressed');
+    moveForward(1);
+  };
+
+  const handleWalkButtonRelease = () => {
+    console.log('Walk button released');
+    moveForward(0);
+  };
+
+  // Helper function to determine if a touch is on the walk button
+  const isWalkButtonTouch = (event) => {
+    const walkButtonElement = document.getElementById('walk-button');
+    if (!walkButtonElement) return false;
 
     const touch = event.touches[0];
-    const joystickRect = joystickContainerRef.current.getBoundingClientRect();
+    const buttonRect = walkButtonElement.getBoundingClientRect();
 
     return (
-      touch.clientX >= joystickRect.left &&
-      touch.clientX <= joystickRect.right &&
-      touch.clientY >= joystickRect.top &&
-      touch.clientY <= joystickRect.bottom
+      touch.clientX >= buttonRect.left &&
+      touch.clientX <= buttonRect.right &&
+      touch.clientY >= buttonRect.top &&
+      touch.clientY <= buttonRect.bottom
     );
   };
 
-  // Prevent propagation of touch events from joystick to the look area
-  const handleJoystickTouch = (event) => {
+  // Prevent propagation of touch events from walk button to the look area
+  const handleWalkButtonTouch = (event) => {
     // Stop propagation to prevent the look area from handling this touch
     event.stopPropagation();
   };
@@ -172,20 +109,32 @@ const Controls = () => {
         />
 
         <div className="absolute bottom-4 left-4 z-50">
-          {/* Joystick container - higher z-index to ensure it receives touches */}
+          {/* Walk button - higher z-index to ensure it receives touches */}
           <div
-            ref={joystickContainerRef}
-            className="absolute bottom-28 left-4 w-32 h-32 rounded-full bg-white bg-opacity-20 z-50"
-            onTouchStart={handleJoystickTouch}
-            onTouchMove={handleJoystickTouch}
-            onTouchEnd={handleJoystickTouch}
-          />
+            id="walk-button"
+            className="absolute bottom-28 left-4 w-24 h-24 rounded-full bg-white bg-opacity-40 flex items-center justify-center z-50 active:bg-opacity-60 select-none"
+            onTouchStart={(e) => {
+              handleWalkButtonTouch(e);
+              handleWalkButtonPress();
+            }}
+            onTouchEnd={(e) => {
+              handleWalkButtonTouch(e);
+              handleWalkButtonRelease();
+            }}
+            onTouchCancel={(e) => {
+              handleWalkButtonTouch(e);
+              handleWalkButtonRelease();
+            }}
+          >
+            <span className="text-lg font-bold text-black">WALK</span>
+          </div>
 
           {/* Mobile controls info */}
+
           <div className="p-3 bg-white bg-opacity-80 rounded-lg shadow-lg z-20 pointer-events-auto">
-            <p>Drag joystick to move</p>
+            <h3 className="text-md font-semibold mb-1">Controls:</h3>
+            <p>Hold WALK button to move forward</p>
             <p>Drag anywhere to look around</p>
-            <p>Tap for flashlight (F)</p>
           </div>
         </div>
       </>
