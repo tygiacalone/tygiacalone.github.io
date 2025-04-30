@@ -282,6 +282,39 @@ const usePlayerControls = () => {
     }, 200);
   };
 
+  // Additional functions for joystick control in Controls component
+  const moveForward = (force) => {
+    if (force > 0) {
+      mobileMovement.current.y = force;
+    } else if (mobileMovement.current.y > 0) {
+      mobileMovement.current.y = 0;
+    }
+  };
+
+  const moveBackward = (force) => {
+    if (force > 0) {
+      mobileMovement.current.y = -force;
+    } else if (mobileMovement.current.y < 0) {
+      mobileMovement.current.y = 0;
+    }
+  };
+
+  const moveLeft = (force) => {
+    if (force > 0) {
+      mobileMovement.current.x = -force;
+    } else if (mobileMovement.current.x < 0) {
+      mobileMovement.current.x = 0;
+    }
+  };
+
+  const moveRight = (force) => {
+    if (force > 0) {
+      mobileMovement.current.x = force;
+    } else if (mobileMovement.current.x > 0) {
+      mobileMovement.current.x = 0;
+    }
+  };
+
   return {
     movement,
     cameraView: cameraAngles,
@@ -289,6 +322,11 @@ const usePlayerControls = () => {
     handleMobileLook,
     handleMobileJump,
     isMobile: enableMobileControls.current,
+    // Export the movement functions for Controls component
+    moveForward,
+    moveBackward,
+    moveLeft,
+    moveRight,
   };
 };
 

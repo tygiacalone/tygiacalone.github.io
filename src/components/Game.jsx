@@ -13,9 +13,8 @@ import PlayerController from './PlayerController';
 import ConnectionManager from './ConnectionManager';
 import Flashlight from './Flashlight';
 import LightningManager from './LightningManager';
-import MobileControls from './MobileControls';
 import useGameStore from '../store/gameStore';
-import usePlayerControls from '../hooks/usePlayerControls';
+import { isMobile } from 'react-device-detect';
 
 // Function to calculate sun position based on time
 const calculateSunPosition = (date) => {
@@ -61,10 +60,6 @@ const Game = () => {
   const [flashlightOn, setFlashlightOn] = useState(true);
   const { playerId, players, updatePlayerFlashlightState, addPlayer } =
     useGameStore();
-
-  // Get mobile controls handlers from the hook
-  const { handleMobileMove, handleMobileLook, handleMobileJump, isMobile } =
-    usePlayerControls();
 
   // Initialize player with flashlight on when component mounts
   useEffect(() => {
@@ -134,26 +129,11 @@ const Game = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [playerId, updatePlayerFlashlightState]);
 
-  // Handle mobile flashlight toggle
-  const handleFlashlightToggle = () => {
-    setFlashlightOn((prev) => {
-      const newState = !prev;
-      if (playerId) {
-        updatePlayerFlashlightState(playerId, newState);
-        console.log(`Mobile flashlight toggled to: ${newState}`);
-      }
-      return newState;
-    });
-  };
-
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden">
+    <div className="w-full h-full">
       {/* 3D Canvas */}
       <Canvas
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
           width: '100%',
           height: '100%',
           zIndex: 1,
@@ -216,50 +196,6 @@ const Game = () => {
           <LightningManager />
         </Suspense>
       </Canvas>
-
-      {/* UI Overlays */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        {/* Connection UI */}
-        <div className="pointer-events-auto">
-          <ConnectionManager />
-        </div>
-
-        {/* Controls Info - Only show on desktop */}
-        {!isMobile && (
-          <div className="absolute bottom-4 left-4 p-3 bg-white bg-opacity-80 rounded-lg shadow-lg max-w-xs z-20 pointer-events-auto">
-            <h3 className="text-md font-semibold mb-1">Controls:</h3>
-            <ul className="text-xs space-y-1">
-              <li>
-                <strong>W/S</strong> - Move forward/backward
-              </li>
-              <li>
-                <strong>A/D</strong> - Rotate player left/right
-              </li>
-              <li>
-                <strong>MOUSE</strong> - Look around (free camera)
-              </li>
-              <li>
-                <strong>SPACE</strong> - Jump
-              </li>
-              <li>
-                <strong>SHIFT</strong> - Run
-              </li>
-              <li>
-                <strong>F</strong> - Toggle flashlight
-              </li>
-            </ul>
-          </div>
-        )}
-
-        {/* Mobile Controls */}
-        <MobileControls
-          onMove={handleMobileMove}
-          onLook={handleMobileLook}
-          onJump={handleMobileJump}
-          onFlashlight={handleFlashlightToggle}
-          className="z-20"
-        />
-      </div>
     </div>
   );
 };

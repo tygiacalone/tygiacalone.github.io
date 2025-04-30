@@ -2,12 +2,13 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import Player from './Player';
-import usePlayerControls from '../hooks/usePlayerControls';
 import useGameStore from '../store/gameStore';
 import useForestStore from '../store/forestStore';
 import usePeerConnection from '../hooks/usePeerConnection';
 import ParticleEffects from './ParticleEffects';
 import Obelisk from './Obelisk';
+import { usePlayerControlsContext } from '../contexts/PlayerControlsContext';
+import { isMobile } from 'react-device-detect';
 
 // Physics constants (in units/second)
 const GRAVITY = 9.81; // Earth's gravity (m/s²)
@@ -57,7 +58,7 @@ const generateObeliskPosition = (spawnPosition, cameraAngle) => {
 };
 
 const PlayerController = () => {
-  const { movement, cameraView } = usePlayerControls();
+  const { movement } = usePlayerControlsContext();
   const { playerId, players, addPlayer } = useGameStore();
   const { checkTreeCollision } = useForestStore();
   const { updatePosition } = usePeerConnection();
@@ -69,6 +70,8 @@ const PlayerController = () => {
   const isJumpingRef = useRef(false);
   const rotationRef = useRef({ x: 0, y: 0, z: 0 });
   const lastRotationUpdateRef = useRef({ x: 0, y: 0, z: 0, lastUpdateTime: 0 });
+  const cameraRotationRef = useRef(new THREE.Euler(0, 0, 0, 'YXZ'));
+  const cameraAnglesRef = useRef({ x: 0, y: 0 });
 
   // Camera wobble refs
   const wobbleTimeRef = useRef(0);
@@ -94,7 +97,7 @@ const PlayerController = () => {
       },
       rotation: {
         x: 0,
-        y: cameraView.y,
+        y: cameraAnglesRef.current.y,
         z: 0,
       },
       // Initialize with flashlight on
@@ -111,7 +114,7 @@ const PlayerController = () => {
     // Set obelisk position in front of spawn based on camera direction
     const obeliskPos = generateObeliskPosition(
       positionRef.current,
-      cameraView.y,
+      cameraAnglesRef.current.y,
     );
     setObeliskPosition(obeliskPos);
 
@@ -132,7 +135,7 @@ const PlayerController = () => {
 
         const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(
           new THREE.Vector3(0, 1, 0),
-          cameraView.y,
+          cameraAnglesRef.current.y,
         );
 
         const dot = forward.dot(obeliskDirection);
@@ -154,11 +157,205 @@ const PlayerController = () => {
         console.log(message);
       }
     }, 2000);
-  }, [addPlayer, playerId, cameraView.y]);
+  }, [addPlayer, playerId]);
+
+  // Setup mouse controls for click and drag
+  useEffect(() => {
+    let isMouseDown = false;
+    let isPointerLocked = false;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+
+    const lockPointer = () => {
+      if (isMobile) return; // Don't lock pointer on mobile
+
+      canvas.requestPointerLock =
+        canvas.requestPointerLock ||
+        canvas.mozRequestPointerLock ||
+        canvas.webkitRequestPointerLock;
+
+      canvas.requestPointerLock();
+    };
+
+    const unlockPointer = () => {
+      if (isMobile) return; // Don't unlock pointer on mobile
+
+      document.exitPointerLock =
+        document.exitPointerLock ||
+        document.mozExitPointerLock ||
+        document.webkitExitPointerLock;
+
+      document.exitPointerLock();
+    };
+
+    const handleMouseDown = (e) => {
+      isMouseDown = true;
+      lockPointer();
+    };
+
+    const handleMouseUp = () => {
+      isMouseDown = false;
+      if (!isMobile) {
+        // Only unlock on desktop
+        unlockPointer();
+      }
+    };
+
+    const handlePointerLockChange = () => {
+      isPointerLocked =
+        document.pointerLockElement === canvas ||
+        document.mozPointerLockElement === canvas ||
+        document.webkitPointerLockElement === canvas;
+
+      // If pointer lock is exited, make sure we update our mouse down state
+      if (!isPointerLocked) {
+        isMouseDown = false;
+      }
+    };
+
+    const handleMouseMove = (event) => {
+      if (!isPointerLocked && !isMouseDown && !isMobile) return;
+
+      // Get mouse movement (with sensitivity adjustment)
+      const sensitivity = 0.002;
+      const movementX =
+        event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+      const movementY =
+        event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+      // Update the camera rotation state
+      cameraRotationRef.current.y -= movementX * sensitivity;
+      cameraRotationRef.current.x -= movementY * sensitivity;
+
+      // Clamp the vertical rotation to avoid flipping
+      cameraRotationRef.current.x = Math.max(
+        -Math.PI / 2 + 0.01,
+        Math.min(Math.PI / 2 - 0.01, cameraRotationRef.current.x),
+      );
+
+      // Update the state for other components to use
+      cameraAnglesRef.current = {
+        x: cameraRotationRef.current.x,
+        y: cameraRotationRef.current.y,
+      };
+    };
+
+    // Touch events for mobile
+    const handleTouchStart = (event) => {
+      if (!isMobile) return;
+
+      // Store initial touch position
+      const touch = event.touches[0];
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+      isMouseDown = true;
+    };
+
+    const handleTouchMove = (event) => {
+      if (!isMobile || !isMouseDown) return;
+
+      // Get touch movement
+      const touch = event.touches[0];
+      const movementX = lastTouchX - touch.clientX;
+      const movementY = lastTouchY - touch.clientY;
+
+      // Apply sensitivity multiplier for touch
+      const touchSensitivity = 0.005;
+
+      // Update camera rotation
+      cameraRotationRef.current.y -= movementX * touchSensitivity;
+      cameraRotationRef.current.x -= movementY * touchSensitivity;
+
+      // Clamp vertical rotation
+      cameraRotationRef.current.x = Math.max(
+        -Math.PI / 2 + 0.01,
+        Math.min(Math.PI / 2 - 0.01, cameraRotationRef.current.x),
+      );
+
+      // Update state
+      cameraAnglesRef.current = {
+        x: cameraRotationRef.current.x,
+        y: cameraRotationRef.current.y,
+      };
+
+      // Update last touch position
+      lastTouchX = touch.clientX;
+      lastTouchY = touch.clientY;
+    };
+
+    const handleTouchEnd = () => {
+      isMouseDown = false;
+    };
+
+    // Add mouse event listeners (for desktop)
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointerlockchange', handlePointerLockChange);
+    document.addEventListener('mozpointerlockchange', handlePointerLockChange);
+    document.addEventListener(
+      'webkitpointerlockchange',
+      handlePointerLockChange,
+    );
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    // Add touch event listeners (for mobile)
+    if (isMobile) {
+      const viewControl = document.querySelector('.view-control') || canvas;
+      viewControl.addEventListener('touchstart', handleTouchStart, {
+        passive: false,
+      });
+      viewControl.addEventListener('touchmove', handleTouchMove, {
+        passive: false,
+      });
+      viewControl.addEventListener('touchend', handleTouchEnd);
+      viewControl.addEventListener('touchcancel', handleTouchEnd);
+    }
+
+    return () => {
+      // Remove mouse event listeners
+      canvas.removeEventListener('mousedown', handleMouseDown);
+      canvas.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener(
+        'pointerlockchange',
+        handlePointerLockChange,
+      );
+      document.removeEventListener(
+        'mozpointerlockchange',
+        handlePointerLockChange,
+      );
+      document.removeEventListener(
+        'webkitpointerlockchange',
+        handlePointerLockChange,
+      );
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+
+      // Remove touch event listeners
+      if (isMobile) {
+        const viewControl = document.querySelector('.view-control') || canvas;
+        viewControl.removeEventListener('touchstart', handleTouchStart);
+        viewControl.removeEventListener('touchmove', handleTouchMove);
+        viewControl.removeEventListener('touchend', handleTouchEnd);
+        viewControl.removeEventListener('touchcancel', handleTouchEnd);
+      }
+
+      // Make sure to unlock pointer when unmounting (desktop only)
+      if (isPointerLocked && !isMobile) {
+        unlockPointer();
+      }
+    };
+  }, []);
 
   // Handle player movement and physics
   useFrame((state, delta) => {
     if (!playerRef.current) return;
+
+    // Apply camera rotation
+    state.camera.rotation.copy(cameraRotationRef.current);
 
     // Get the player's current position
     const position = playerRef.current.position;
@@ -202,7 +399,10 @@ const PlayerController = () => {
     if (direction.length() > 0) direction.normalize();
 
     // Apply camera rotation to movement direction
-    direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraView.y);
+    direction.applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      cameraAnglesRef.current.y,
+    );
 
     // Set velocity based on movement direction
     velocityRef.current.x = direction.x * speed;
@@ -303,9 +503,6 @@ const PlayerController = () => {
     state.camera.position.copy(position);
     state.camera.position.y += 1.5; // Eye height
 
-    // Note: Camera rotation is handled in the usePlayerControls hook
-    // We only need to apply wobble effects here
-
     // Add wobble effect when walking
     if (isMovingRef.current && !isJumpingRef.current) {
       // Increment wobble time
@@ -317,8 +514,10 @@ const PlayerController = () => {
 
       // Horizontal bob (left and right) - relative to camera view
       const horizontalBob = Math.cos(wobbleTimeRef.current * 1.5) * 0.025;
-      state.camera.position.x += horizontalBob * Math.cos(cameraView.y);
-      state.camera.position.z += horizontalBob * Math.sin(cameraView.y);
+      state.camera.position.x +=
+        horizontalBob * Math.cos(cameraAnglesRef.current.y);
+      state.camera.position.z +=
+        horizontalBob * Math.sin(cameraAnglesRef.current.y);
 
       // Slight tilt
       state.camera.rotation.z = Math.sin(wobbleTimeRef.current) * 0.01;
