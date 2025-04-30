@@ -7,12 +7,54 @@ import useGameStore from '../store/gameStore';
 import useForestStore from '../store/forestStore';
 import usePeerConnection from '../hooks/usePeerConnection';
 import ParticleEffects from './ParticleEffects';
+import Obelisk from './Obelisk';
 
 // Physics constants (in units/second)
 const GRAVITY = 9.81; // Earth's gravity (m/s²)
 const JUMP_FORCE = 3.5; // Lower jump height (was 5)
 const PLAYER_HEIGHT = 1; // Player's height from ground
 const PLAYER_RADIUS = 0.5; // Radius for collision detection
+
+// Spawn area configuration
+const SPAWN_RADIUS = 5; // Radius of spawn circle
+const SPAWN_CENTER_X = 0; // Center X coordinate of spawn area
+const SPAWN_CENTER_Z = 0; // Center Z coordinate of spawn area
+
+// Generate a spawn position within the spawn circle
+const generateSpawnPosition = () => {
+  // Random angle around the circle
+  const angle = Math.random() * Math.PI * 2;
+
+  // Random distance from center (with slight variation)
+  const distance = SPAWN_RADIUS * 0.5 + Math.random() * (SPAWN_RADIUS * 0.5);
+
+  // Calculate position using polar coordinates
+  const x = SPAWN_CENTER_X + Math.cos(angle) * distance;
+  const z = SPAWN_CENTER_Z + Math.sin(angle) * distance;
+
+  return new THREE.Vector3(
+    x,
+    1, // Fixed Y position (above ground)
+    z,
+  );
+};
+
+// Generate a position for the obelisk in front of spawn point
+const generateObeliskPosition = (spawnPosition, cameraAngle) => {
+  // Calculate direction vector based on camera angle
+  const directionVector = new THREE.Vector3(
+    Math.sin(cameraAngle),
+    0,
+    -Math.cos(cameraAngle),
+  );
+
+  // Place obelisk 3 units in front of player's view direction
+  return new THREE.Vector3(
+    spawnPosition.x + directionVector.x * 3,
+    0, // On the ground
+    spawnPosition.z + directionVector.z * 3,
+  );
+};
 
 const PlayerController = () => {
   const { movement, cameraView } = usePlayerControls();
@@ -23,16 +65,10 @@ const PlayerController = () => {
   // Player physics refs
   const playerRef = useRef();
   const velocityRef = useRef(new THREE.Vector3());
-  const positionRef = useRef(
-    new THREE.Vector3(
-      Math.random() * 20 - 10, // Random X position
-      1, // Y position (height)
-      Math.random() * 20 - 10, // Random Z position
-    ),
-  );
+  const positionRef = useRef(generateSpawnPosition());
   const isJumpingRef = useRef(false);
   const rotationRef = useRef({ x: 0, y: 0, z: 0 });
-  const lastRotationUpdateRef = useRef(0);
+  const lastRotationUpdateRef = useRef({ x: 0, y: 0, z: 0, lastUpdateTime: 0 });
 
   // Camera wobble refs
   const wobbleTimeRef = useRef(0);
@@ -42,6 +78,10 @@ const PlayerController = () => {
   const [playerPosition, setPlayerPosition] = useState({ x: 0, y: 1, z: 0 });
   const [isMoving, setIsMoving] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+
+  // State for Obelisk
+  const [showObelisk, setShowObelisk] = useState(true);
+  const [obeliskPosition, setObeliskPosition] = useState(null);
 
   // Add local player to the game state
   useEffect(() => {
@@ -67,6 +107,53 @@ const PlayerController = () => {
       y: positionRef.current.y,
       z: positionRef.current.z,
     });
+
+    // Set obelisk position in front of spawn based on camera direction
+    const obeliskPos = generateObeliskPosition(
+      positionRef.current,
+      cameraView.y,
+    );
+    setObeliskPosition(obeliskPos);
+
+    // Debug message
+    console.log('Player spawned at:', positionRef.current);
+    console.log('Obelisk placed at:', obeliskPos);
+    console.log('Look for the glowing white obelisk in front of you!');
+
+    // Add a timeout to remind the player where to look
+    setTimeout(() => {
+      // Add a message to help user locate the obelisk
+      if (showObelisk) {
+        const obeliskDirection = new THREE.Vector3(
+          obeliskPos.x - positionRef.current.x,
+          0,
+          obeliskPos.z - positionRef.current.z,
+        ).normalize();
+
+        const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          cameraView.y,
+        );
+
+        const dot = forward.dot(obeliskDirection);
+        let message = '';
+
+        if (dot > 0.7) {
+          message = 'Look straight ahead for the glowing obelisk!';
+        } else if (dot > 0) {
+          message =
+            'Look slightly to your ' +
+            (obeliskDirection.x * forward.z - obeliskDirection.z * forward.x > 0
+              ? 'right'
+              : 'left') +
+            ' for the glowing obelisk!';
+        } else {
+          message = 'Turn around to see the glowing obelisk!';
+        }
+
+        console.log(message);
+      }
+    }, 2000);
   }, [addPlayer, playerId, cameraView.y]);
 
   // Handle player movement and physics
@@ -182,11 +269,17 @@ const PlayerController = () => {
     // Check if there's significant movement or rotation change
     const now = performance.now();
     const rotationChanged =
-      Math.abs(state.camera.rotation.y - lastRotationUpdateRef.current) > 0.01;
+      Math.abs(state.camera.rotation.x - lastRotationUpdateRef.current.x) >
+        0.01 ||
+      Math.abs(state.camera.rotation.y - lastRotationUpdateRef.current.y) >
+        0.01 ||
+      Math.abs(state.camera.rotation.z - lastRotationUpdateRef.current.z) >
+        0.01;
+
     const shouldUpdateNetwork =
       velocityRef.current.length() > 0.01 ||
       rotationChanged ||
-      now - lastRotationUpdateRef.current > 100;
+      now - lastRotationUpdateRef.current.lastUpdateTime > 100;
 
     if (shouldUpdateNetwork) {
       updatePosition(
@@ -197,7 +290,13 @@ const PlayerController = () => {
           z: state.camera.rotation.z,
         },
       );
-      lastRotationUpdateRef.current = state.camera.rotation.y;
+      // Store the full rotation and update time
+      lastRotationUpdateRef.current = {
+        x: state.camera.rotation.x,
+        y: state.camera.rotation.y,
+        z: state.camera.rotation.z,
+        lastUpdateTime: now,
+      };
     }
 
     // Update camera position to follow player
@@ -229,6 +328,11 @@ const PlayerController = () => {
     }
   });
 
+  // Handle obelisk expiration
+  const handleObeliskExpire = () => {
+    setShowObelisk(false);
+  };
+
   return (
     <>
       {/* Local player - invisible to local player but has physics */}
@@ -246,6 +350,14 @@ const PlayerController = () => {
           <capsuleGeometry args={[PLAYER_RADIUS, 1, 4, 8]} />
         </mesh>
       </group>
+
+      {/* Floating obelisk */}
+      {showObelisk && obeliskPosition && (
+        <Obelisk
+          position={[obeliskPosition.x, obeliskPosition.y, obeliskPosition.z]}
+          onExpire={handleObeliskExpire}
+        />
+      )}
 
       {/* Display all players */}
       {Object.entries(players).map(([id, playerData]) => (

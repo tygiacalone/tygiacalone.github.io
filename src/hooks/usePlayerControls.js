@@ -21,6 +21,10 @@ const usePlayerControls = () => {
   const mousePosition = useRef({ x: 0, y: 0 });
   const isPointerLocked = useRef(false);
 
+  // Mobile controls state
+  const mobileMovement = useRef({ x: 0, y: 0 });
+  const enableMobileControls = useRef(false);
+
   const { camera, gl } = useThree();
 
   // Handle keyboard controls
@@ -174,6 +178,17 @@ const usePlayerControls = () => {
     // Handle mouse up event outside canvas (in case user drags out of canvas)
     document.addEventListener('mouseup', handleMouseUp);
 
+    // Check if device is mobile
+    const checkMobile = () => {
+      const isMobile =
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        );
+      enableMobileControls.current = isMobile;
+    };
+
+    checkMobile();
+
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mouseup', handleMouseUp);
@@ -206,9 +221,74 @@ const usePlayerControls = () => {
     }
   }, [cameraAngles, camera]);
 
+  // Process mobile joystick input
+  useEffect(() => {
+    if (!enableMobileControls.current) return;
+
+    // Update movement based on mobile joystick
+    const updateMovement = () => {
+      // Calculate forward/backward movement
+      if (mobileMovement.current.y > 0.2) {
+        setMovement((m) => ({ ...m, forward: true, backward: false }));
+      } else if (mobileMovement.current.y < -0.2) {
+        setMovement((m) => ({ ...m, forward: false, backward: true }));
+      } else {
+        setMovement((m) => ({ ...m, forward: false, backward: false }));
+      }
+
+      // Calculate left/right movement
+      if (mobileMovement.current.x < -0.2) {
+        setMovement((m) => ({ ...m, left: true, right: false }));
+      } else if (mobileMovement.current.x > 0.2) {
+        setMovement((m) => ({ ...m, left: false, right: true }));
+      } else {
+        setMovement((m) => ({ ...m, left: false, right: false }));
+      }
+    };
+
+    const interval = setInterval(updateMovement, 16); // 60fps update rate
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Methods for mobile controls
+  const handleMobileMove = (x, y) => {
+    mobileMovement.current = { x, y };
+  };
+
+  const handleMobileLook = (deltaX, deltaY) => {
+    // Update camera rotation based on touch movement
+    cameraRotation.current.y -= deltaX;
+    cameraRotation.current.x -= deltaY;
+
+    // Clamp vertical rotation
+    cameraRotation.current.x = Math.max(
+      -Math.PI / 2 + 0.01,
+      Math.min(Math.PI / 2 - 0.01, cameraRotation.current.x),
+    );
+
+    // Update angles
+    setCameraAngles({
+      x: cameraRotation.current.x,
+      y: cameraRotation.current.y,
+    });
+  };
+
+  const handleMobileJump = () => {
+    setMovement((m) => ({ ...m, jump: true }));
+    // Reset jump after a short delay
+    setTimeout(() => {
+      setMovement((m) => ({ ...m, jump: false }));
+    }, 200);
+  };
+
   return {
     movement,
     cameraView: cameraAngles,
+    handleMobileMove,
+    handleMobileLook,
+    handleMobileJump,
+    isMobile: enableMobileControls.current,
   };
 };
 

@@ -19,7 +19,6 @@ const Player = ({
 
   // Log player creation for debugging
   useEffect(() => {
-    // Initial console log to debug player visibility
     console.log(`Player ${playerId} rendered:`, {
       position,
       rotation,
@@ -43,8 +42,9 @@ const Player = ({
     }
   }, [playerId, position, rotation, isLocalPlayer]);
 
-  // Update remote player position with smooth interpolation
-  useFrame(({ clock }) => {
+  // Update player position and rotation with smooth interpolation
+  useFrame(() => {
+    // Only apply interpolation to remote players
     if (!isLocalPlayer && playerRef.current && position) {
       // Set target position for smooth interpolation
       targetPositionRef.current.set(position.x, position.y, position.z);
@@ -53,9 +53,8 @@ const Player = ({
       const lerpFactor = 0.1;
       playerRef.current.position.lerp(targetPositionRef.current, lerpFactor);
 
-      // Smoothly rotate towards target rotation
+      // Smoothly rotate towards target rotation for body
       if (rotation) {
-        // Player body rotates only on Y axis (facing direction)
         const targetRotationY = rotation.y;
         playerRef.current.rotation.y = THREE.MathUtils.lerp(
           playerRef.current.rotation.y,
@@ -65,23 +64,21 @@ const Player = ({
       }
     }
 
-    // Update face direction to match the full player rotation
+    // Update face rotation for all players
     if (faceRef.current && rotation) {
-      // Apply x rotation (looking up/down) and y rotation (looking left/right)
+      // Face pitch (looking up/down)
       faceRef.current.rotation.x = rotation.x;
-      // Face already points forward, just need to adjust for head tilt
+    }
 
-      // Animate arms slightly based on rotation
-      if (leftArmRef.current && rightArmRef.current) {
-        // Adjust arm positioning based on looking up/down
-        const armTilt = Math.max(-0.3, Math.min(0.3, rotation.x));
-        leftArmRef.current.rotation.x = armTilt;
-        rightArmRef.current.rotation.x = armTilt;
-      }
+    // Update arm rotations based on camera pitch
+    if (leftArmRef.current && rightArmRef.current && rotation) {
+      const armPitch = Math.max(-0.3, Math.min(0.3, rotation.x));
+      leftArmRef.current.rotation.x = armPitch;
+      rightArmRef.current.rotation.x = armPitch;
     }
   });
 
-  // If no position data, still render but display missing data warning
+  // If no position data, render a placeholder
   if (!position) {
     return (
       <group ref={playerRef} position={[0, 0, 0]}>
@@ -93,24 +90,41 @@ const Player = ({
     );
   }
 
-  // Simple player avatar - a capsule with a different color for the local player
+  // Player model with body, face, and arms
   return (
-    <group ref={playerRef}>
+    <group ref={playerRef} position={[position.x, position.y, position.z]}>
       {/* Player body */}
-      <mesh castShadow>
-        <capsuleGeometry args={[0.2, 0.6, 4, 8]} />
+      <mesh castShadow position={[0, 0.5, 0]}>
+        <capsuleGeometry args={[0.25, 0.5, 8, 8]} />
         <meshStandardMaterial
           color={isLocalPlayer ? '#4285F4' : '#DB4437'}
-          roughness={0.5}
-          emissive={isLocalPlayer ? '#000000' : '#550000'}
-          emissiveIntensity={0.2}
+          roughness={0.6}
         />
       </mesh>
 
-      {/* Player "face" indication - to show which way they're looking */}
-      <group ref={faceRef} position={[0, 0.25, 0.2]}>
+      {/* Player face */}
+      <group ref={faceRef} position={[0, 0.8, 0.2]}>
+        {/* Face base */}
         <mesh castShadow>
-          <boxGeometry args={[0.15, 0.08, 0.08]} />
+          <boxGeometry args={[0.3, 0.3, 0.1]} />
+          <meshStandardMaterial color="#FFDBAC" roughness={0.5} />
+        </mesh>
+
+        {/* Left eye */}
+        <mesh position={[-0.08, 0.05, 0.06]} castShadow>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+
+        {/* Right eye */}
+        <mesh position={[0.08, 0.05, 0.06]} castShadow>
+          <sphereGeometry args={[0.04, 8, 8]} />
+          <meshStandardMaterial color="#000000" />
+        </mesh>
+
+        {/* Mouth */}
+        <mesh position={[0, -0.07, 0.06]} castShadow>
+          <boxGeometry args={[0.15, 0.03, 0.01]} />
           <meshStandardMaterial color="#000000" />
         </mesh>
       </group>
@@ -118,45 +132,45 @@ const Player = ({
       {/* Left arm */}
       <group
         ref={leftArmRef}
-        position={[-0.3, 0.1, 0]}
+        position={[-0.4, 0.5, 0]}
         rotation={[0, 0, -Math.PI / 6]}
       >
         <mesh castShadow>
-          <capsuleGeometry args={[0.05, 0.3, 4, 8]} />
+          <capsuleGeometry args={[0.07, 0.4, 8, 8]} />
           <meshStandardMaterial
             color={isLocalPlayer ? '#4285F4' : '#DB4437'}
             roughness={0.6}
           />
         </mesh>
         {/* Left hand */}
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <sphereGeometry args={[0.06, 8, 8]} />
-          <meshStandardMaterial color="#E8BEAC" roughness={0.7} />
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#FFDBAC" roughness={0.7} />
         </mesh>
       </group>
 
       {/* Right arm */}
       <group
         ref={rightArmRef}
-        position={[0.3, 0.1, 0]}
+        position={[0.4, 0.5, 0]}
         rotation={[0, 0, Math.PI / 6]}
       >
         <mesh castShadow>
-          <capsuleGeometry args={[0.05, 0.3, 4, 8]} />
+          <capsuleGeometry args={[0.07, 0.4, 8, 8]} />
           <meshStandardMaterial
             color={isLocalPlayer ? '#4285F4' : '#DB4437'}
             roughness={0.6}
           />
         </mesh>
         {/* Right hand */}
-        <mesh position={[0, -0.2, 0]} castShadow>
-          <sphereGeometry args={[0.06, 8, 8]} />
-          <meshStandardMaterial color="#E8BEAC" roughness={0.7} />
+        <mesh position={[0, -0.25, 0]} castShadow>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#FFDBAC" roughness={0.7} />
         </mesh>
       </group>
 
       {/* Player ID above head */}
-      <group position={[0, 1, 0]}>
+      <group position={[0, 1.3, 0]}>
         <mesh>
           <boxGeometry args={[0.4, 0.2, 0.05]} />
           <meshStandardMaterial
@@ -165,7 +179,6 @@ const Player = ({
             transparent
           />
         </mesh>
-        {/* ID display would go here if we had text capabilities */}
       </group>
     </group>
   );
