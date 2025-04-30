@@ -49,16 +49,17 @@ const generateObeliskPosition = (spawnPosition, cameraAngle) => {
     -Math.cos(cameraAngle),
   );
 
-  // Place obelisk 3 units in front of player's view direction
+  // Place obelisk 5 units in front of player's view direction
   return new THREE.Vector3(
-    spawnPosition.x + directionVector.x * 3,
+    spawnPosition.x + directionVector.x * 5,
     0, // On the ground
-    spawnPosition.z + directionVector.z * 3,
+    spawnPosition.z + directionVector.z * 5,
   );
 };
 
 const PlayerController = () => {
-  const { movement } = usePlayerControlsContext();
+  const { movement, cameraRotation, cameraChanged } =
+    usePlayerControlsContext();
   const { playerId, players, addPlayer } = useGameStore();
   const { checkTreeCollision } = useForestStore();
   const { updatePosition } = usePeerConnection();
@@ -86,18 +87,49 @@ const PlayerController = () => {
   const [showObelisk, setShowObelisk] = useState(true);
   const [obeliskPosition, setObeliskPosition] = useState(null);
 
+  // Ref to track if initialization was already performed
+  const hasInitializedRef = useRef(false);
+
+  // Sync context camera rotation with internal refs
+  useEffect(() => {
+    if (isMobile) {
+      // On mobile, use camera rotation from context that's updated by Controls component
+      cameraRotationRef.current.x = cameraRotation.x;
+      cameraRotationRef.current.y = cameraRotation.y;
+
+      // Update angles for other components
+      cameraAnglesRef.current = {
+        x: cameraRotation.x,
+        y: cameraRotation.y,
+      };
+    }
+  }, [cameraRotation, cameraChanged, isMobile]);
+
   // Add local player to the game state
   useEffect(() => {
-    addPlayer(playerId, {
-      id: playerId,
+    // Skip if already initialized (prevents recreation on component remounts)
+    if (hasInitializedRef.current) {
+      return;
+    }
+
+    // Mark as initialized immediately to prevent double execution
+    hasInitializedRef.current = true;
+
+    const currentAddPlayer = addPlayer;
+    const currentPlayerId = playerId;
+    const initialPosition = positionRef.current.clone();
+    const initialCameraAngle = cameraAnglesRef.current.y;
+
+    currentAddPlayer(currentPlayerId, {
+      id: currentPlayerId,
       position: {
-        x: positionRef.current.x,
-        y: positionRef.current.y,
-        z: positionRef.current.z,
+        x: initialPosition.x,
+        y: initialPosition.y,
+        z: initialPosition.z,
       },
       rotation: {
         x: 0,
-        y: cameraAnglesRef.current.y,
+        y: initialCameraAngle,
         z: 0,
       },
       // Initialize with flashlight on
@@ -106,36 +138,36 @@ const PlayerController = () => {
 
     // Initialize player position for particles
     setPlayerPosition({
-      x: positionRef.current.x,
-      y: positionRef.current.y,
-      z: positionRef.current.z,
+      x: initialPosition.x,
+      y: initialPosition.y,
+      z: initialPosition.z,
     });
 
     // Set obelisk position in front of spawn based on camera direction
     const obeliskPos = generateObeliskPosition(
-      positionRef.current,
-      cameraAnglesRef.current.y,
+      initialPosition,
+      initialCameraAngle,
     );
     setObeliskPosition(obeliskPos);
 
     // Debug message
-    console.log('Player spawned at:', positionRef.current);
+    console.log('Player spawned at:', initialPosition);
     console.log('Obelisk placed at:', obeliskPos);
     console.log('Look for the glowing white obelisk in front of you!');
 
     // Add a timeout to remind the player where to look
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
       // Add a message to help user locate the obelisk
       if (showObelisk) {
         const obeliskDirection = new THREE.Vector3(
-          obeliskPos.x - positionRef.current.x,
+          obeliskPos.x - initialPosition.x,
           0,
-          obeliskPos.z - positionRef.current.z,
+          obeliskPos.z - initialPosition.z,
         ).normalize();
 
         const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(
           new THREE.Vector3(0, 1, 0),
-          cameraAnglesRef.current.y,
+          initialCameraAngle,
         );
 
         const dot = forward.dot(obeliskDirection);
@@ -157,21 +189,24 @@ const PlayerController = () => {
         console.log(message);
       }
     }, 2000);
-  }, [addPlayer, playerId]);
 
-  // Setup mouse controls for click and drag
+    return () => {
+      clearTimeout(timerId); // Clean up the timeout
+    };
+  }, [addPlayer, playerId]); // Include dependencies but use ref to prevent re-execution
+
+  // Setup mouse controls for click and drag (desktop only)
   useEffect(() => {
+    // Skip on mobile devices - they use context camera rotation
+    if (isMobile) return;
+
     let isMouseDown = false;
     let isPointerLocked = false;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
 
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
 
     const lockPointer = () => {
-      if (isMobile) return; // Don't lock pointer on mobile
-
       canvas.requestPointerLock =
         canvas.requestPointerLock ||
         canvas.mozRequestPointerLock ||
@@ -181,8 +216,6 @@ const PlayerController = () => {
     };
 
     const unlockPointer = () => {
-      if (isMobile) return; // Don't unlock pointer on mobile
-
       document.exitPointerLock =
         document.exitPointerLock ||
         document.mozExitPointerLock ||
@@ -198,10 +231,7 @@ const PlayerController = () => {
 
     const handleMouseUp = () => {
       isMouseDown = false;
-      if (!isMobile) {
-        // Only unlock on desktop
-        unlockPointer();
-      }
+      unlockPointer();
     };
 
     const handlePointerLockChange = () => {
@@ -217,7 +247,7 @@ const PlayerController = () => {
     };
 
     const handleMouseMove = (event) => {
-      if (!isPointerLocked && !isMouseDown && !isMobile) return;
+      if (!isPointerLocked && !isMouseDown) return;
 
       // Get mouse movement (with sensitivity adjustment)
       const sensitivity = 0.002;
@@ -243,54 +273,7 @@ const PlayerController = () => {
       };
     };
 
-    // Touch events for mobile
-    const handleTouchStart = (event) => {
-      if (!isMobile) return;
-
-      // Store initial touch position
-      const touch = event.touches[0];
-      lastTouchX = touch.clientX;
-      lastTouchY = touch.clientY;
-      isMouseDown = true;
-    };
-
-    const handleTouchMove = (event) => {
-      if (!isMobile || !isMouseDown) return;
-
-      // Get touch movement
-      const touch = event.touches[0];
-      const movementX = lastTouchX - touch.clientX;
-      const movementY = lastTouchY - touch.clientY;
-
-      // Apply sensitivity multiplier for touch
-      const touchSensitivity = 0.005;
-
-      // Update camera rotation
-      cameraRotationRef.current.y -= movementX * touchSensitivity;
-      cameraRotationRef.current.x -= movementY * touchSensitivity;
-
-      // Clamp vertical rotation
-      cameraRotationRef.current.x = Math.max(
-        -Math.PI / 2 + 0.01,
-        Math.min(Math.PI / 2 - 0.01, cameraRotationRef.current.x),
-      );
-
-      // Update state
-      cameraAnglesRef.current = {
-        x: cameraRotationRef.current.x,
-        y: cameraRotationRef.current.y,
-      };
-
-      // Update last touch position
-      lastTouchX = touch.clientX;
-      lastTouchY = touch.clientY;
-    };
-
-    const handleTouchEnd = () => {
-      isMouseDown = false;
-    };
-
-    // Add mouse event listeners (for desktop)
+    // Add mouse event listeners
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('pointerlockchange', handlePointerLockChange);
@@ -302,21 +285,7 @@ const PlayerController = () => {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
 
-    // Add touch event listeners (for mobile)
-    if (isMobile) {
-      const viewControl = document.querySelector('.view-control') || canvas;
-      viewControl.addEventListener('touchstart', handleTouchStart, {
-        passive: false,
-      });
-      viewControl.addEventListener('touchmove', handleTouchMove, {
-        passive: false,
-      });
-      viewControl.addEventListener('touchend', handleTouchEnd);
-      viewControl.addEventListener('touchcancel', handleTouchEnd);
-    }
-
     return () => {
-      // Remove mouse event listeners
       canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener(
@@ -334,21 +303,12 @@ const PlayerController = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
 
-      // Remove touch event listeners
-      if (isMobile) {
-        const viewControl = document.querySelector('.view-control') || canvas;
-        viewControl.removeEventListener('touchstart', handleTouchStart);
-        viewControl.removeEventListener('touchmove', handleTouchMove);
-        viewControl.removeEventListener('touchend', handleTouchEnd);
-        viewControl.removeEventListener('touchcancel', handleTouchEnd);
-      }
-
-      // Make sure to unlock pointer when unmounting (desktop only)
-      if (isPointerLocked && !isMobile) {
+      // Make sure to unlock pointer when unmounting
+      if (isPointerLocked) {
         unlockPointer();
       }
     };
-  }, []);
+  }, [isMobile]);
 
   // Handle player movement and physics
   useFrame((state, delta) => {

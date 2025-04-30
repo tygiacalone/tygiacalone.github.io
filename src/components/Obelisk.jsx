@@ -3,12 +3,21 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 
+// Static counter to generate unique IDs and track created obelisks
+const createdObelisks = new Set();
+
 const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
   const obeliskRef = useRef();
   const baseRef = useRef();
   const glowRef = useRef();
   const textRef = useRef();
   const { camera, raycaster, mouse, scene, gl } = useThree();
+
+  // Store the initial position in a ref to avoid reacting to prop changes
+  const initialPositionRef = useRef(position);
+
+  // Generate a unique ID for this obelisk instance
+  const obeliskId = useRef(`obelisk-${initialPositionRef.current.join(',')}`);
 
   // Track when the obelisk was created
   const creationTimeRef = useRef(Date.now());
@@ -20,21 +29,31 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
   const floatHeight = useRef(0.3 + Math.random() * 0.2);
   const floatSpeed = useRef(0.5 + Math.random() * 0.3);
 
-  // Console log to debug
+  // Console log to debug - only run once per unique position
   useEffect(() => {
-    console.log('Obelisk created at position:', position);
+    // Check if this obelisk was already created
+    if (createdObelisks.has(obeliskId.current)) {
+      return; // Skip if already created
+    }
+
+    // Add to set of created obelisks
+    createdObelisks.add(obeliskId.current);
+
+    console.log('Obelisk created at position:', initialPositionRef.current);
 
     // Add debug sphere to mark position
     const geometry = new THREE.SphereGeometry(0.2, 16, 16);
     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.set(position[0], position[1] + 0.2, position[2]);
+    const pos = initialPositionRef.current;
+    sphere.position.set(pos[0], pos[1] + 0.2, pos[2]);
     scene.add(sphere);
 
     return () => {
       scene.remove(sphere);
+      // Don't remove from createdObelisks to prevent recreation if component remounts
     };
-  }, [position, scene]);
+  }, []); // Run only once on mount
 
   // Handle mouse clicks
   useEffect(() => {
@@ -70,6 +89,8 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
     // Trigger onExpire callback when time runs out
     if (remaining <= 0 && onExpire) {
+      // Remove from the set to allow proper cleanup
+      createdObelisks.delete(obeliskId.current);
       onExpire();
       return;
     }
@@ -79,7 +100,7 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
       Math.sin(
         state.clock.elapsedTime * floatSpeed.current + floatOffset.current,
       ) * floatHeight.current;
-    obeliskRef.current.position.y = position[1] + floatY + 2; // Increased height
+    obeliskRef.current.position.y = initialPositionRef.current[1] + floatY + 2; // Increased height
 
     // Gentle rotation
     obeliskRef.current.rotation.y += delta * 0.2;
@@ -120,7 +141,11 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
       {/* Base (on the ground) */}
       <mesh
         ref={baseRef}
-        position={[position[0], position[1] + 0.05, position[2]]}
+        position={[
+          initialPositionRef.current[0],
+          initialPositionRef.current[1] + 0.05,
+          initialPositionRef.current[2],
+        ]}
         rotation={[-Math.PI / 2, 0, 0]}
       >
         <ringGeometry args={[0.5, 2, 32]} /> {/* Larger, more detailed ring */}
@@ -134,7 +159,11 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
       {/* Additional ground decoration */}
       <mesh
-        position={[position[0], position[1] + 0.02, position[2]]}
+        position={[
+          initialPositionRef.current[0],
+          initialPositionRef.current[1] + 0.02,
+          initialPositionRef.current[2],
+        ]}
         rotation={[-Math.PI / 2, 0, 0]}
       >
         <ringGeometry args={[0, 0.5, 16]} />
@@ -149,7 +178,11 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
       {/* Obelisk */}
       <group
         ref={obeliskRef}
-        position={[position[0], position[1] + 2, position[2]]} // Increased height
+        position={[
+          initialPositionRef.current[0],
+          initialPositionRef.current[1] + 2,
+          initialPositionRef.current[2],
+        ]} // Increased height
       >
         {/* Main obelisk body */}
         <mesh castShadow>
@@ -203,7 +236,11 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
       {/* Point light for glow */}
       <pointLight
-        position={[position[0], position[1] + 2, position[2]]}
+        position={[
+          initialPositionRef.current[0],
+          initialPositionRef.current[1] + 2,
+          initialPositionRef.current[2],
+        ]}
         color="#FFFFFF"
         intensity={2} // Increased intensity
         distance={10} // Increased range
@@ -211,7 +248,11 @@ const Obelisk = ({ position = [0, 0, 0], onExpire }) => {
 
       {/* Additional atmospheric light */}
       <pointLight
-        position={[position[0], position[1] + 0.1, position[2]]}
+        position={[
+          initialPositionRef.current[0],
+          initialPositionRef.current[1] + 0.1,
+          initialPositionRef.current[2],
+        ]}
         color="#80FFFF"
         intensity={1.5}
         distance={5}

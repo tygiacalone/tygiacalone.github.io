@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import nipplejs from 'nipplejs';
 import { isMobile } from 'react-device-detect';
 import { usePlayerControlsContext } from '../contexts/PlayerControlsContext';
@@ -6,15 +6,27 @@ import { usePlayerControlsContext } from '../contexts/PlayerControlsContext';
 const Controls = () => {
   const joystickContainerRef = useRef(null);
   const joystickInstanceRef = useRef(null);
-  const { moveForward, moveBackward, moveLeft, moveRight } =
-    usePlayerControlsContext();
+  const lookAreaRef = useRef(null);
+  const [lastTouchPosition, setLastTouchPosition] = useState({ x: 0, y: 0 });
+  const [lookActive, setLookActive] = useState(false);
 
+  const {
+    moveForward,
+    moveBackward,
+    moveLeft,
+    moveRight,
+    updateCameraRotation,
+  } = usePlayerControlsContext();
+
+  // Handle joystick for movement controls
   useEffect(() => {
     if (
       isMobile &&
       joystickContainerRef.current &&
       !joystickInstanceRef.current
     ) {
+      console.log('Creating mobile joystick');
+
       // Create joystick for mobile controls
       joystickInstanceRef.current = nipplejs.create({
         zone: joystickContainerRef.current,
@@ -22,6 +34,8 @@ const Controls = () => {
         position: { left: '50%', top: '50%' },
         color: 'white',
         size: 100,
+        fadeTime: 100, // Smooth fade on release
+        restOpacity: 0.5, // Slightly visible when not active
       });
 
       // Handle joystick events
@@ -52,11 +66,13 @@ const Controls = () => {
       });
 
       joystickInstanceRef.current.on('end', () => {
-        // Stop all movement when joystick is released
+        // Smoothly stop all movement when joystick is released
         moveForward(0);
         moveBackward(0);
         moveLeft(0);
         moveRight(0);
+
+        console.log('Joystick released, stopping movement');
       });
     }
 
@@ -68,16 +84,64 @@ const Controls = () => {
     };
   }, [isMobile, moveForward, moveBackward, moveLeft, moveRight]);
 
+  // Handle mobile look controls
+  const handleTouchStart = (event) => {
+    if (!isMobile) return;
+
+    const touch = event.touches[0];
+    setLastTouchPosition({
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+    setLookActive(true);
+
+    // Prevent default to avoid scrolling
+    event.preventDefault();
+  };
+
+  const handleTouchMove = (event) => {
+    if (!isMobile || !lookActive) return;
+
+    const touch = event.touches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+
+    // Calculate movement delta
+    const deltaX = (currentX - lastTouchPosition.x) * 0.005; // Adjust sensitivity
+    const deltaY = (currentY - lastTouchPosition.y) * 0.005;
+
+    // Update camera rotation through context
+    updateCameraRotation(-deltaX, -deltaY);
+
+    // Update last position
+    setLastTouchPosition({
+      x: currentX,
+      y: currentY,
+    });
+
+    // Prevent default to avoid scrolling
+    event.preventDefault();
+  };
+
+  const handleTouchEnd = () => {
+    setLookActive(false);
+  };
+
   if (isMobile) {
     return (
       <div className="fixed inset-0 pointer-events-none z-50">
         {/* View control area */}
         <div
+          ref={lookAreaRef}
           className="absolute top-0 left-0 w-full h-[60%] z-50"
           style={{
             touchAction: 'none',
             pointerEvents: 'auto',
           }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         />
 
         {/* Joystick container */}
@@ -92,7 +156,7 @@ const Controls = () => {
         {/* Mobile controls info */}
         <div className="absolute top-4 right-4 p-3 bg-black bg-opacity-50 rounded-lg text-white text-xs z-50 pointer-events-none">
           <p>Drag left side to move</p>
-          <p>Drag right side to look</p>
+          <p>Drag anywhere to look around</p>
           <p>Tap for flashlight (F)</p>
         </div>
       </div>

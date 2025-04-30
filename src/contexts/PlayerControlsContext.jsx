@@ -16,6 +16,26 @@ export const PlayerControlsProvider = ({ children }) => {
   // For mobile controls
   const mobileMovement = useRef({ x: 0, y: 0 });
 
+  // For camera rotation
+  const cameraRotation = useRef({ x: 0, y: 0 });
+  const [cameraChanged, setCameraChanged] = useState(false);
+
+  // Method to update camera rotation (for mobile)
+  const updateCameraRotation = (deltaX, deltaY) => {
+    // Update camera rotation
+    cameraRotation.current.y += deltaX;
+    cameraRotation.current.x += deltaY;
+
+    // Clamp vertical rotation to avoid flipping
+    cameraRotation.current.x = Math.max(
+      -Math.PI / 2 + 0.01,
+      Math.min(Math.PI / 2 - 0.01, cameraRotation.current.x),
+    );
+
+    // Set flag to indicate camera rotation has changed
+    setCameraChanged((prev) => !prev);
+  };
+
   // Additional functions for joystick control in Controls component
   const moveForward = (force) => {
     if (force > 0) {
@@ -152,6 +172,9 @@ export const PlayerControlsProvider = ({ children }) => {
     moveLeft,
     moveRight,
     mobileMovement: mobileMovement.current,
+    cameraRotation: cameraRotation.current,
+    cameraChanged,
+    updateCameraRotation,
   };
 
   return (

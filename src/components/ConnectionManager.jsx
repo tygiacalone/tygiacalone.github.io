@@ -17,7 +17,7 @@ const ConnectionManager = () => {
   }, [connections]);
 
   return (
-    <div className="absolute top-4 right-4 p-4 bg-white bg-opacity-80 rounded-lg shadow-lg max-w-xs z-10">
+    <div className="absolute top-4 right-4 p-4 bg-white bg-opacity-80 rounded-lg shadow-lg max-w-xs z-50">
       <h3 className="text-lg font-semibold mb-2">Multiplayer Forest</h3>
 
       <div className="mb-3">
