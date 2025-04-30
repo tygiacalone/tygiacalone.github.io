@@ -115,8 +115,21 @@ const Obelisk = ({ position = [0, 0, 0] }) => {
     const playerPosition = new THREE.Vector3();
     camera.getWorldPosition(playerPosition);
 
-    // Update camera position to spawn point
+    // Update camera position to spawn point - this is the key action
     camera.position.copy(SPAWN_POSITION);
+
+    // Add a visual effect for teleportation
+    const flash = new THREE.PointLight(0xffffff, 20, 100);
+    flash.position.copy(playerPosition);
+    scene.add(flash);
+
+    // Remove the flash effect after a short time
+    setTimeout(() => {
+      scene.remove(flash);
+    }, 300);
+
+    // Open the resume URL in a new tab
+    window.open(RESUME_URL, '_blank');
 
     // Reset book state after a delay
     setTimeout(() => setBookOpened(false), 1000);
