@@ -30,12 +30,15 @@ const Controls = () => {
       // Create joystick for mobile controls
       joystickInstanceRef.current = nipplejs.create({
         zone: joystickContainerRef.current,
-        mode: 'static',
+        mode: 'dynamic', // Changed from static to dynamic for reset behavior
         position: { left: '50%', top: '50%' },
         color: 'white',
-        size: 100,
+        size: 120, // Increased size for better control
         fadeTime: 100, // Smooth fade on release
         restOpacity: 0.5, // Slightly visible when not active
+        restJoystick: true, // Ensures joystick returns to center on release
+        lockX: false, // Allow full X-axis movement
+        lockY: false, // Allow full Y-axis movement
       });
 
       // Handle joystick events
@@ -43,36 +46,46 @@ const Controls = () => {
         const angle = data.angle.radian;
         const force = Math.min(data.force, 1);
 
-        // Reset all movement
-        moveForward(0);
-        moveBackward(0);
-        moveLeft(0);
-        moveRight(0);
+        // Calculate directional vectors based on joystick angle
+        const forwardAmount = Math.cos(angle - Math.PI / 2) * force;
+        const rightAmount = Math.cos(angle) * force;
 
-        // Apply movement based on joystick direction
-        if (angle >= Math.PI * 0.75 && angle < Math.PI * 1.25) {
-          // Left
-          moveLeft(force);
-        } else if (angle >= Math.PI * 1.25 && angle < Math.PI * 1.75) {
-          // Down
-          moveBackward(force);
-        } else if (angle >= Math.PI * 1.75 || angle < Math.PI * 0.25) {
-          // Right
-          moveRight(force);
-        } else if (angle >= Math.PI * 0.25 && angle < Math.PI * 0.75) {
-          // Up
-          moveForward(force);
+        // Apply movements with proper vector calculations
+        // This allows for diagonal movement by combining directions
+        if (forwardAmount > 0) {
+          moveForward(forwardAmount);
+        } else if (forwardAmount < 0) {
+          moveBackward(-forwardAmount);
+        } else {
+          // Reset forward/backward if not actively moving in that direction
+          moveForward(0);
+          moveBackward(0);
+        }
+
+        if (rightAmount > 0) {
+          moveRight(rightAmount);
+        } else if (rightAmount < 0) {
+          moveLeft(-rightAmount);
+        } else {
+          // Reset left/right if not actively moving in that direction
+          moveLeft(0);
+          moveRight(0);
         }
       });
 
       joystickInstanceRef.current.on('end', () => {
-        // Smoothly stop all movement when joystick is released
+        // Immediately stop all movement when joystick is released
         moveForward(0);
         moveBackward(0);
         moveLeft(0);
         moveRight(0);
 
         console.log('Joystick released, stopping movement');
+      });
+
+      // Handle start event to ensure proper reset
+      joystickInstanceRef.current.on('start', () => {
+        console.log('Joystick touch started');
       });
     }
 
@@ -147,7 +160,7 @@ const Controls = () => {
         {/* Joystick container */}
         <div
           ref={joystickContainerRef}
-          className="absolute bottom-16 left-16 w-32 h-32 rounded-full bg-white bg-opacity-20 z-50"
+          className="absolute bottom-24 left-24 w-40 h-40 rounded-full bg-white bg-opacity-20 z-50"
           style={{
             pointerEvents: 'auto',
           }}
@@ -155,9 +168,8 @@ const Controls = () => {
 
         {/* Mobile controls info */}
         <div className="absolute top-4 right-4 p-3 bg-black bg-opacity-50 rounded-lg text-white text-xs z-50 pointer-events-none">
-          <p>Drag left side to move</p>
-          <p>Drag anywhere to look around</p>
-          <p>Tap for flashlight (F)</p>
+          <p>Use joystick to move</p>
+          <p>Drag anywhere else to look around</p>
         </div>
       </div>
     );
